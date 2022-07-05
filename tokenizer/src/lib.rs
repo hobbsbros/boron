@@ -50,7 +50,7 @@ pub struct Tokenizer {
     charstream: CharStream,
 }
 
-const SEPARATORS: &str = "\n ;";
+const WHITESPACE: &str = "\n ";
 
 /// Provides functions for the `Tokenizer` struct.
 impl Tokenizer {
@@ -77,16 +77,35 @@ impl Tokenizer {
         self.charstream.peek()
     }
 
-    /// Yields the next token from the token stream.
-    pub fn next(&mut self) -> Option<Token> {
-        // Skip separators
+    /// Skips all whitespace (newlines, spaces, and comments)
+    fn skip_whitespace(&mut self) {
+        let mut in_comment = false;
         while let Some(c) = self.peek_char() {
-            if SEPARATORS.contains(c) {
+            if WHITESPACE.contains(c) {
                 self.next_char();
             } else {
                 break;
             }
         }
+    }
+
+    /// Yields the next token from the token stream.
+    pub fn next(&mut self) -> Option<Token> {
+        // Skip whitespace
+        self.skip_whitespace();
+
+        if self.peek_char() == Some('#') {
+            while let Some(c) = self.peek_char() {
+                if c != '\n' {
+                    self.next_char();
+                } else {
+                    break;
+                }
+            }
+        }
+
+        // Skip any whitespace again
+        self.skip_whitespace();
 
         let character = match self.next_char() {
             Some(c) => c,
@@ -116,7 +135,7 @@ impl Tokenizer {
             '0'..='9' => {
                 let mut sofar = String::from(character);
                 while let Some(chr) = self.peek_char() {
-                    if !SEPARATORS.contains(chr) {
+                    if !WHITESPACE.contains(chr) {
                         sofar.push(chr);
                         self.next_char();
                     } else {
@@ -138,7 +157,7 @@ impl Tokenizer {
             'A'..='z' => {
                 let mut sofar = String::from(character);
                 while let Some(chr) = self.peek_char() {
-                    if !SEPARATORS.contains(chr) {
+                    if !WHITESPACE.contains(chr) {
                         sofar.push(chr);
                         self.next_char();
                     } else {
