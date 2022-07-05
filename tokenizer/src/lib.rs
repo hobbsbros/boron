@@ -27,17 +27,17 @@ impl CharStream {
     }
 
     /// Gets the next character in the stream without advancing the stream.
-    pub fn peek(&self) -> char {
+    pub fn peek(&self) -> Option<char> {
         // If beyond the end of the source string, return EOF.
         if self.index >= self.source.len() {
-            '\0'
+            None
         } else {
-            self.source[self.index]
+            Some(self.source[self.index])
         }
     }
 
     /// Gets the next character in the stream and advances the stream.
-    pub fn next(&mut self) -> char {
+    pub fn next(&mut self) -> Option<char> {
         let character = self.peek();
         self.index += 1;
         character
@@ -65,9 +65,67 @@ impl Tokenizer {
         Self::from_charstream(charstream)
     }
 
+    /// Gets the next character in the character stream.
+    fn next_char(&mut self) -> Option<char> {
+        self.charstream.next()
+    }
+
+    /// Peeks at the next character in the character stream.
+    fn peek_char(&self) -> Option<char> {
+        self.charstream.peek()
+    }
+
     /// Yields the next token from the token stream.
-    pub fn next(&mut self) -> Self {
-        todo!();
+    pub fn next(&mut self) -> Option<Token> {
+        let character = match self.next_char() {
+            Some(c) => c,
+            None => return None,
+        };
+        
+        let token = match character {
+            // EOF
+            '\0' => Token::new('\0'.to_string(), TokenType::Eof),
+            // Newline
+            '\n' => Token::new('\n'.to_string(), TokenType::Newline),
+            // Open parenthesis
+            '(' => Token::new('('.to_string(), TokenType::OpenParen),
+            // Closing parenthesis
+            ')' => Token::new(')'.to_string(), TokenType::CloseParen),
+            // Integer or floating-point
+            '0'..='9' => {
+                let mut sofar = String::from(character);
+                while let Some(character) = self.peek_char() {
+
+                }
+                Token::new(sofar, TokenType::Int)
+            },
+            // Identifier or type keyword
+            'A'..='z' => {
+                let mut sofar = String::from(character);
+                while let Some(chr) = self.next_char() {
+                    if chr != ' ' {
+                        sofar.push(chr);
+                    } else {
+                        break;
+                    }
+                }
+
+                let token = match sofar.as_str() {
+                    "int" => Token::new(sofar, TokenType::IntType),
+                    "float" => Token::new(sofar, TokenType::FloatType),
+                    "bool" => Token::new(sofar, TokenType::BoolType),
+                    "true" => Token::new(sofar, TokenType::Bool),
+                    "false" => Token::new(sofar, TokenType::Bool),
+                    _ => Token::new(sofar, TokenType::Identifier),
+                };
+
+                token
+            },
+            // Unknown type
+            _ => Token::new(character.to_string(), TokenType::Unknown),
+        };
+
+        Some(token)
     }
 
     /// Consumes the character stream and yields all tokens.

@@ -10,10 +10,18 @@ pub enum TokenType {
     CloseParen,
     Int,
     Float,
+    Bool,
     Assignment,
     Identifier,
     Plus,
     Minus,
+    Multiply,
+    Divide,
+    Not,
+    Unknown,
+    IntType,
+    FloatType,
+    BoolType,
 }
 
 
