@@ -51,6 +51,7 @@ pub struct Tokenizer {
 }
 
 const WHITESPACE: &str = "\n ";
+const SEPARATORS: &str = "\n ()";
 
 /// Provides functions for the `Tokenizer` struct.
 impl Tokenizer {
@@ -79,7 +80,6 @@ impl Tokenizer {
 
     /// Skips all whitespace (newlines, spaces, and comments)
     fn skip_whitespace(&mut self) {
-        let mut in_comment = false;
         while let Some(c) = self.peek_char() {
             if WHITESPACE.contains(c) {
                 self.next_char();
@@ -135,7 +135,7 @@ impl Tokenizer {
             '0'..='9' => {
                 let mut sofar = String::from(character);
                 while let Some(chr) = self.peek_char() {
-                    if !WHITESPACE.contains(chr) {
+                    if !SEPARATORS.contains(chr) {
                         sofar.push(chr);
                         self.next_char();
                     } else {
@@ -157,7 +157,7 @@ impl Tokenizer {
             'A'..='z' => {
                 let mut sofar = String::from(character);
                 while let Some(chr) = self.peek_char() {
-                    if !WHITESPACE.contains(chr) {
+                    if !SEPARATORS.contains(chr) {
                         sofar.push(chr);
                         self.next_char();
                     } else {
