@@ -51,7 +51,7 @@ pub struct Tokenizer {
 }
 
 const WHITESPACE: &str = "\n ";
-const SEPARATORS: &str = "\n ()";
+const SEPARATORS: &str = "\n ():";
 
 /// Provides functions for the `Tokenizer` struct.
 impl Tokenizer {
@@ -116,21 +116,21 @@ impl Tokenizer {
             // EOF
             '\0' => return None,
             // Open parenthesis
-            '(' => Token::new('('.to_string(), TokenType::OpenParen),
+            '(' => Token::new(character.to_string(), TokenType::OpenParen),
             // Closing parenthesis
-            ')' => Token::new(')'.to_string(), TokenType::CloseParen),
+            ')' => Token::new(character.to_string(), TokenType::CloseParen),
             // Assignment
-            '=' => Token::new('='.to_string(), TokenType::Assignment),
+            ':' => Token::new(character.to_string(), TokenType::Assignment),
             // Plus
-            '+' => Token::new('+'.to_string(), TokenType::Plus),
+            '+' => Token::new(character.to_string(), TokenType::Plus),
             // Minus
-            '-' => Token::new('-'.to_string(), TokenType::Minus),
+            '-' => Token::new(character.to_string(), TokenType::Minus),
             // Multiply
-            '*' => Token::new('*'.to_string(), TokenType::Multiply),
+            '*' => Token::new(character.to_string(), TokenType::Multiply),
             // Divide
-            '/' => Token::new('/'.to_string(), TokenType::Divide),
+            '/' => Token::new(character.to_string(), TokenType::Divide),
             // Not
-            '!' => Token::new('!'.to_string(), TokenType::Not),
+            '!' => Token::new(character.to_string(), TokenType::Not),
             // Integer or floating-point
             '0'..='9' => {
                 let mut sofar = String::from(character);
