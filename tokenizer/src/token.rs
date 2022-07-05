@@ -2,9 +2,8 @@
 
 
 /// Enumerates token types available.
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum TokenType {
-    Eof,
     Newline,
     OpenParen,
     CloseParen,
@@ -18,14 +17,15 @@ pub enum TokenType {
     Multiply,
     Divide,
     Not,
-    Unknown,
     IntType,
     FloatType,
     BoolType,
+    Unknown,
 }
 
 
 /// Defines an abstraction over tokens.
+#[derive(Debug)]
 pub struct Token {
     val: String,
     t: TokenType,

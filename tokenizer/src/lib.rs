@@ -84,27 +84,54 @@ impl Tokenizer {
         
         let token = match character {
             // EOF
-            '\0' => Token::new('\0'.to_string(), TokenType::Eof),
+            '\0' => return None,
             // Newline
             '\n' => Token::new('\n'.to_string(), TokenType::Newline),
             // Open parenthesis
             '(' => Token::new('('.to_string(), TokenType::OpenParen),
             // Closing parenthesis
             ')' => Token::new(')'.to_string(), TokenType::CloseParen),
+            // Assignment
+            '=' => Token::new('='.to_string(), TokenType::Assignment),
+            // Plus
+            '+' => Token::new('+'.to_string(), TokenType::Plus),
+            // Minus
+            '-' => Token::new('-'.to_string(), TokenType::Minus),
+            // Multiply
+            '*' => Token::new('*'.to_string(), TokenType::Multiply),
+            // Divide
+            '/' => Token::new('/'.to_string(), TokenType::Divide),
+            // Not
+            '!' => Token::new('!'.to_string(), TokenType::Not),
             // Integer or floating-point
             '0'..='9' => {
                 let mut sofar = String::from(character);
-                while let Some(character) = self.peek_char() {
-
+                while let Some(chr) = self.peek_char() {
+                    if chr != ' ' {
+                        sofar.push(chr);
+                        self.next_char();
+                    } else {
+                        break;
+                    }
                 }
-                Token::new(sofar, TokenType::Int)
+
+                let mut token = Token::new(sofar.clone(), TokenType::Unknown);
+
+                if let Ok(_) = str::parse::<i32>(&sofar) {
+                    token = Token::new(sofar, TokenType::Int);
+                } else if let Ok(_) = str::parse::<f32>(&sofar) {
+                    token = Token::new(sofar, TokenType::Float);
+                }
+
+                token
             },
             // Identifier or type keyword
             'A'..='z' => {
                 let mut sofar = String::from(character);
-                while let Some(chr) = self.next_char() {
+                while let Some(chr) = self.peek_char() {
                     if chr != ' ' {
                         sofar.push(chr);
+                        self.next_char();
                     } else {
                         break;
                     }
@@ -129,8 +156,14 @@ impl Tokenizer {
     }
 
     /// Consumes the character stream and yields all tokens.
-    /// Note: this is only for debugging purposes.
+    /// Note: this is only used for debugging purposes.
     pub fn collect(&mut self) -> Vec<Token> {
-        todo!();
+        let mut tokens: Vec<Token> = Vec::new();
+        
+        while let Some(t) = self.next() {
+            tokens.push(t);
+        }
+
+        tokens
     }
 }
