@@ -4,7 +4,6 @@
 /// Enumerates token types available.
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum TokenType {
-    Newline,
     OpenParen,
     CloseParen,
     Int,

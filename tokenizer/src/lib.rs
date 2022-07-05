@@ -50,6 +50,8 @@ pub struct Tokenizer {
     charstream: CharStream,
 }
 
+const SEPARATORS: &str = "\n ;";
+
 /// Provides functions for the `Tokenizer` struct.
 impl Tokenizer {
     /// Constructs a new token stream from a stream of characters.
@@ -77,6 +79,15 @@ impl Tokenizer {
 
     /// Yields the next token from the token stream.
     pub fn next(&mut self) -> Option<Token> {
+        // Skip separators
+        while let Some(c) = self.peek_char() {
+            if SEPARATORS.contains(c) {
+                self.next_char();
+            } else {
+                break;
+            }
+        }
+
         let character = match self.next_char() {
             Some(c) => c,
             None => return None,
@@ -85,8 +96,6 @@ impl Tokenizer {
         let token = match character {
             // EOF
             '\0' => return None,
-            // Newline
-            '\n' => Token::new('\n'.to_string(), TokenType::Newline),
             // Open parenthesis
             '(' => Token::new('('.to_string(), TokenType::OpenParen),
             // Closing parenthesis
@@ -107,7 +116,7 @@ impl Tokenizer {
             '0'..='9' => {
                 let mut sofar = String::from(character);
                 while let Some(chr) = self.peek_char() {
-                    if chr != ' ' {
+                    if !SEPARATORS.contains(chr) {
                         sofar.push(chr);
                         self.next_char();
                     } else {
@@ -129,7 +138,7 @@ impl Tokenizer {
             'A'..='z' => {
                 let mut sofar = String::from(character);
                 while let Some(chr) = self.peek_char() {
-                    if chr != ' ' {
+                    if !SEPARATORS.contains(chr) {
                         sofar.push(chr);
                         self.next_char();
                     } else {
