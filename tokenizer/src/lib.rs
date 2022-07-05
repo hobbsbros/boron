@@ -4,7 +4,7 @@
 pub mod token;
 
 
-use token::{
+pub use token::{
     Token,
     TokenType,
 };
