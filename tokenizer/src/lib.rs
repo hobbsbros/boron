@@ -115,6 +115,10 @@ impl Tokenizer {
             '(' => Token::new(character.to_string(), TokenType::OpenParen),
             // Closing parenthesis
             ')' => Token::new(character.to_string(), TokenType::CloseParen),
+            // Open curly brace
+            '{' => Token::new(character.to_string(), TokenType::OpenBrace),
+            // Closing curly brace
+            '}' => Token::new(character.to_string(), TokenType::CloseBrace),
             // Assignment
             ':' => Token::new(character.to_string(), TokenType::Assignment),
             // Plus

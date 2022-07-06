@@ -143,7 +143,6 @@ impl Emitter {
                 emitted.push_str("}");
                 emitted.to_owned()
             },
-            Expression::None => String::from("\n"),
         };
 
         value.to_owned()
@@ -160,11 +159,6 @@ impl Emitter {
     fn writeln(&mut self, s: &str) {
         self.code.push_str(s);
         self.code.push('\n');
-    }
-
-    /// Emits a section of code by concatenating to the C program.
-    fn write(&mut self, s: &str) {
-        self.code.push_str(s);
     }
 
     /// Compiles a list of expressions into a string of C code.
@@ -210,7 +204,6 @@ impl Emitter {
 
         for expression in expressions {
             let statement = self.emit(&expression);
-            self.write("\t");
             self.writescln(&statement);
         }
 

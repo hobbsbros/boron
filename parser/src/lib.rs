@@ -80,7 +80,6 @@ pub enum Expression {
         condition: Box<Expression>,
         body: Vec<Expression>,
     },
-    None,
 }
 
 
@@ -136,6 +135,8 @@ impl Parser {
 
         let left = parselet.parse(self, tokenizer, token);
 
+        dbg!(&left);
+
         let token = match tokenizer.peek() {
             Some(t) => t,
             None => return Some(left),
@@ -150,12 +151,7 @@ impl Parser {
 
         tokenizer.next();
 
-        let right = parselet.parse(self, tokenizer, left.clone(), token);
-
-        match right {
-            Expression::None => Some(left),
-            _ => Some(right),
-        }
+        Some(parselet.parse(self, tokenizer, left.clone(), token))
     }
 
     /// Parses the program into a list of expressions.

@@ -26,6 +26,7 @@ impl InfixParselet for OpenParenParselet {
             // Until we find a closing parenthesis, parse each expression
             while let Some(t) = tokenizer.peek() {
                 if t.get_type() == TokenType::CloseParen {
+                    tokenizer.next();
                     break;
                 }
 
@@ -44,7 +45,8 @@ impl InfixParselet for OpenParenParselet {
                 args,
             }
         } else {
-            Expression::None
+            dbg!(&left);
+            todo!();
         }
     }
 }
