@@ -26,7 +26,11 @@ impl InfixParselet for BinOpParselet {
             TokenType::Plus
             | TokenType::Minus
             | TokenType::Multiply
-            | TokenType::Divide => {
+            | TokenType::Divide 
+            | TokenType::Greater
+            | TokenType::Less
+            | TokenType::Equal
+            => {
                 // No problem!
             },
             _ => todo!(), // Error: invalid binary operation

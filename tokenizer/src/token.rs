@@ -15,8 +15,12 @@ pub enum TokenType {
     Minus,
     Multiply,
     Divide,
+    Greater,
+    Less,
+    Equal,
     Not,
     Type,
+    While,
     Unknown,
 }
 

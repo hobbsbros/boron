@@ -38,6 +38,9 @@ impl Emitter {
             TokenType::Minus => "-",
             TokenType::Multiply => "*",
             TokenType::Divide => "/",
+            TokenType::Greater => ">",
+            TokenType::Less => "<",
+            TokenType::Equal => "=",
             _ => todo!(),
         };
 
@@ -112,7 +115,7 @@ impl Emitter {
                         self.emit_printf(a.clone())
                     },
                     _ => {
-                        let mut emitted = format!("{}(", n).to_string();
+                        let mut emitted = format!("{}(", n);
                         // Emit each argument recursively
                         for (idx, arg) in a.iter().enumerate() {
                             emitted.push_str(&format!("{}", self.emit(arg)));
@@ -125,6 +128,22 @@ impl Emitter {
                     }
                 }
             },
+            Expression::While {
+                condition: c,
+                body: b,
+            } => {
+                let mut emitted = format!("while (");
+                // Emit the condition
+                emitted.push_str(&self.emit(&*c));
+                emitted.push_str(") {\n");
+                // Emit each expression in the while loop
+                for expr in b.iter() {
+                    emitted.push_str(&format!("{};\n", self.emit(expr)));
+                }
+                emitted.push_str("}");
+                emitted.to_owned()
+            },
+            Expression::None => String::from("\n"),
         };
 
         value.to_owned()

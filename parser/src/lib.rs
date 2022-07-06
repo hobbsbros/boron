@@ -11,6 +11,7 @@ pub mod literal_parselet;
 pub mod openparen_parselet;
 pub mod binop_parselet;
 pub mod paren_parselet;
+pub mod while_parselet;
 
 
 use std::collections::HashMap;
@@ -25,6 +26,7 @@ use literal_parselet::LiteralParselet;
 use openparen_parselet::OpenParenParselet;
 use binop_parselet::BinOpParselet;
 use paren_parselet::ParenParselet;
+use while_parselet::WhileParselet;
 
 pub use tokenizer::{
     Token,
@@ -72,7 +74,13 @@ pub enum Expression {
     FnCall {
         name: String,
         args: Vec<Expression>,
-    }
+    },
+    // While loop
+    While {
+        condition: Box<Expression>,
+        body: Vec<Expression>,
+    },
+    None,
 }
 
 
@@ -91,6 +99,7 @@ impl Parser {
         // Declarative grammar begins here.
         prefix_parselets.insert(TokenType::Type, Box::new(DatatypeParselet {}));
         prefix_parselets.insert(TokenType::Identifier, Box::new(IdentifierParselet {}));
+        prefix_parselets.insert(TokenType::While, Box::new(WhileParselet {}));
         prefix_parselets.insert(TokenType::Int, Box::new(LiteralParselet {}));
         prefix_parselets.insert(TokenType::Float, Box::new(LiteralParselet {}));
         prefix_parselets.insert(TokenType::Bool, Box::new(LiteralParselet {}));
@@ -101,6 +110,9 @@ impl Parser {
         infix_parselets.insert(TokenType::Minus, Box::new(BinOpParselet {}));
         infix_parselets.insert(TokenType::Multiply, Box::new(BinOpParselet {}));
         infix_parselets.insert(TokenType::Divide, Box::new(BinOpParselet {}));
+        infix_parselets.insert(TokenType::Greater, Box::new(BinOpParselet {}));
+        infix_parselets.insert(TokenType::Less, Box::new(BinOpParselet {}));
+        infix_parselets.insert(TokenType::Equal, Box::new(BinOpParselet {}));
 
         Self {
             prefix_parselets,
@@ -138,7 +150,12 @@ impl Parser {
 
         tokenizer.next();
 
-        Some(parselet.parse(self, tokenizer, left, token))
+        let right = parselet.parse(self, tokenizer, left.clone(), token);
+
+        match right {
+            Expression::None => Some(left),
+            _ => Some(right),
+        }
     }
 
     /// Parses the program into a list of expressions.

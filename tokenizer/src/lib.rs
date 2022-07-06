@@ -127,6 +127,12 @@ impl Tokenizer {
             '/' => Token::new(character.to_string(), TokenType::Divide),
             // Not
             '!' => Token::new(character.to_string(), TokenType::Not),
+            // Greater
+            '>' => Token::new(character.to_string(), TokenType::Greater),
+            // Less
+            '<' => Token::new(character.to_string(), TokenType::Less),
+            // Equal
+            '=' => Token::new(character.to_string(), TokenType::Equal),
             // Integer or floating-point
             '0'..='9' => {
                 let mut sofar = String::from(character);
@@ -167,6 +173,7 @@ impl Tokenizer {
                     "bool" => Token::new(sofar, TokenType::Type),
                     "true" => Token::new(sofar, TokenType::Bool),
                     "false" => Token::new(sofar, TokenType::Bool),
+                    "while" => Token::new(sofar, TokenType::While),
                     _ => Token::new(sofar, TokenType::Identifier),
                 };
 

@@ -31,7 +31,10 @@ impl InfixParselet for OpenParenParselet {
 
                 let expr: Expression = match parser.parse(tokenizer) {
                     Some(e) => e,
-                    None => todo!(),
+                    None => {
+                        dbg!(&tokenizer.peek());
+                        todo!();
+                    },
                 };
                 args.push(expr);
             }
@@ -41,7 +44,7 @@ impl InfixParselet for OpenParenParselet {
                 args,
             }
         } else {
-            todo!();
+            Expression::None
         }
     }
 }
