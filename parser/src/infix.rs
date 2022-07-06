@@ -5,10 +5,11 @@ use crate::{
     Parser,
     Expression,
     Token,
+    Tokenizer,
 };
 
 
 /// Defines shared behavior for infix parselets.
 pub trait InfixParselet {
-    fn parse(&self, parser: &Parser, left: Expression, token: Token) -> Expression;
+    fn parse(&self, parser: &Parser, tokenizer: &mut Tokenizer, left: Expression, token: Token) -> Expression;
 }

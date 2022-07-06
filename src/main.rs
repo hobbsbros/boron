@@ -19,6 +19,10 @@ use tokenizer::{
     Tokenizer,
 };
 
+use parser::{
+    Parser,
+};
+
 
 fn main() {
     println!("Boron Compiler");
@@ -36,5 +40,10 @@ fn main() {
 
     let mut tokenizer = Tokenizer::new(code);
 
-    dbg!(tokenizer.collect());
+    dbg!(&tokenizer.clone().collect());
+
+    let parser = Parser::new();
+
+    dbg!(parser.parse(&mut tokenizer));
+    dbg!(parser.parse(&mut tokenizer));
 }

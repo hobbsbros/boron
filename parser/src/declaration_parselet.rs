@@ -6,16 +6,17 @@ use crate::{
     Expression,
     Token,
     TokenType,
+    Tokenizer,
     infix::InfixParselet,
 };
 
 
 /// Provides a prefix parselet for variable declarations.
-pub struct DatatypeParselet;
+pub struct DeclarationParselet;
 
-impl InfixParselet for DatatypeParselet {
+impl InfixParselet for DeclarationParselet {
     /// Parses a variable declaration into an expression.
-    fn parse(&self, _parser: &Parser, left: Expression, token: Token) -> Expression {
+    fn parse(&self, _parser: &Parser, _tokenizer: &mut Tokenizer, left: Expression, token: Token) -> Expression {
         // Make sure the left token is a type keyword
         if let Expression::Type (t) = left {
             // Make sure the current token is an identifier

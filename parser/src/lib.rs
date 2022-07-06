@@ -7,6 +7,8 @@ pub mod prefix;
 pub mod identifier_parselet;
 pub mod datatype_parselet;
 pub mod declaration_parselet;
+pub mod assignment_parselet;
+pub mod literal_parselet;
 
 
 use std::collections::HashMap;
@@ -15,18 +17,20 @@ use infix::InfixParselet;
 use prefix::PrefixParselet;
 
 use identifier_parselet::IdentifierParselet;
+use datatype_parselet::DatatypeParselet;
+use declaration_parselet::DeclarationParselet;
+use assignment_parselet::AssignmentParselet;
+use literal_parselet::LiteralParselet;
 
 pub use tokenizer::{
     Token,
     TokenType,
-};
-
-use tokenizer::{
     Tokenizer,
 };
 
 
 /// Defines possible expressions in Boron.
+#[derive(Debug)]
 pub enum Expression {
     // 32-bit integer
     Int (i32),
@@ -70,7 +74,13 @@ impl Parser {
         let mut infix_parselets: HashMap<TokenType, Box<dyn InfixParselet>> = HashMap::new();
 
         // Declarative grammar begins here.
+        prefix_parselets.insert(TokenType::Type, Box::new(DatatypeParselet {}));
         prefix_parselets.insert(TokenType::Identifier, Box::new(IdentifierParselet {}));
+        prefix_parselets.insert(TokenType::Int, Box::new(LiteralParselet {}));
+        prefix_parselets.insert(TokenType::Float, Box::new(LiteralParselet {}));
+        prefix_parselets.insert(TokenType::Bool, Box::new(LiteralParselet {}));
+        infix_parselets.insert(TokenType::Identifier, Box::new(DeclarationParselet {}));
+        infix_parselets.insert(TokenType::Assignment, Box::new(AssignmentParselet {}));
 
         Self {
             prefix_parselets,
@@ -86,14 +96,32 @@ impl Parser {
             None => return None,
         };
 
+        dbg!(&token);
+
         // Get the proper prefix parselet from the type of the given token.
         let parselet: &Box<dyn PrefixParselet> = match self.prefix_parselets.get(&token.get_type()) {
             Some(p) => p,
             None => return None,
         };
 
-        let expr = parselet.parse(self, token);
+        let left = parselet.parse(self, tokenizer, token);
 
-        Some(expr)
+        dbg!(&left);
+
+        let token = match tokenizer.next() {
+            Some(t) => t,
+            None => return Some(left),
+        };
+
+        dbg!(&token);
+
+        // Get the proper infix parselet from the type of the given token,
+        // or return the current expression.
+        let parselet: &Box<dyn InfixParselet> = match self.infix_parselets.get(&token.get_type()) {
+            Some(p) => p,
+            None => return Some(left),
+        };
+
+        Some(parselet.parse(self, tokenizer, left, token))
     }
 }

@@ -11,6 +11,7 @@ pub use token::{
 
 
 /// Creates a character stream.
+#[derive(Clone)]
 pub struct CharStream {
     source: Vec<char>,
     index: usize,
@@ -46,6 +47,7 @@ impl CharStream {
 
 
 /// Provides an abstraction over tokenization behavior.
+#[derive(Clone)]
 pub struct Tokenizer {
     charstream: CharStream,
 }

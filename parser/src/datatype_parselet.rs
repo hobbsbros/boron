@@ -6,6 +6,7 @@ use crate::{
     Expression,
     Token,
     TokenType,
+    Tokenizer,
     prefix::PrefixParselet,
 };
 
@@ -15,9 +16,21 @@ pub struct DatatypeParselet;
 
 impl PrefixParselet for DatatypeParselet {
     /// Parses a datatype keyword into an expression.
-    fn parse(&self, _parser: &Parser, token: Token) -> Expression {
+    fn parse(&self, parser: &Parser, tokenizer: &mut Tokenizer, token: Token) -> Expression {
         if token.get_type() == TokenType::Type {
-            Expression::Type (token.get_value())
+            let identifier = match tokenizer.next() {
+                Some(i) => i,
+                None => todo!(),
+            };
+
+            if identifier.get_type() == TokenType::Identifier {
+                Expression::Declaration {
+                    identifier: identifier.get_value(),
+                    datatype: token.get_value()
+                }
+            } else {
+                todo!();
+            }
         } else {
             todo!()
         }
