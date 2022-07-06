@@ -16,6 +16,11 @@ use crate::parser::{
     TokenType,
 };
 
+use crate::error::{
+    throw,
+    Error,
+};
+
 
 pub struct Emitter {
     variables: HashMap<String, String>,
@@ -41,7 +46,7 @@ impl Emitter {
             TokenType::Greater => ">",
             TokenType::Less => "<",
             TokenType::Equal => "=",
-            _ => todo!(),
+            _ => throw(Error::CouldNotEmit ("binary operation".to_string())),
         };
 
         op_str.to_owned()
@@ -68,7 +73,7 @@ impl Emitter {
                         emitted.push_str(&id);
                         emitted.push_str(" ? \"true\\n\" : \"false\\n\"");
                     }
-                    _ => todo!(),
+                    _ => throw(Error::CouldNotEmit (id.to_string())),
                 }
                 emitted.push_str(");\n\t");
             }
@@ -87,7 +92,7 @@ impl Emitter {
             Expression::Float (f) => format!("{}", f),
             Expression::Bool (b) => format!("{}", b),
             Expression::Identifier (s) => format!("{}", s),
-            Expression::Type (_) => todo!(),
+            Expression::Type (t) => throw(Error::CouldNotEmit (t.to_string())),
             Expression::BinOp {
                 left: l,
                 op: o,

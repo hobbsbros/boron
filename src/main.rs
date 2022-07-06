@@ -60,7 +60,7 @@ fn main() {
 
     let code = match fs::read_to_string(&filename) {
         Ok(c) => c,
-        Err(_) => todo!(),
+        Err(_) => throw(Error::CouldNotReadFile (filename.to_owned())),
     };
 
     let mut tokenizer = Tokenizer::new(code);
@@ -71,19 +71,21 @@ fn main() {
     let mut emitter = Emitter::new();
     let code = emitter.compile(expressions);
 
+    let output_filename = "out.c".to_string();
+
     // Open a file for output
     let mut output = match OpenOptions::new()
         .create(true)
         .write(true)
         .truncate(true)
-        .open("out.c")
+        .open(output_filename.to_owned())
     {
         Ok(f) => f,
-        Err(_) => todo!(),
+        Err(_) => throw(Error::CouldNotCreate (output_filename.to_owned())),
     };
 
     match output.write_all(code.as_bytes()) {
         Ok(_) => println!("Successfully compiled.  Output written to 'out.c'."),
-        Err(_) => todo!(),
+        Err(_) => throw(Error::CouldNotWriteFile (output_filename.to_owned())),
     }
 }
