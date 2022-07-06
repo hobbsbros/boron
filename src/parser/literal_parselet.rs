@@ -10,6 +10,11 @@ use crate::parser::{
     prefix::PrefixParselet,
 };
 
+use crate::error::{
+    throw,
+    Error,
+};
+
 
 /// Provides a prefix parselet for literals.
 pub struct LiteralParselet;
@@ -34,11 +39,11 @@ impl PrefixParselet for LiteralParselet {
                 let bln: bool = match token.get_value().as_str() {
                     "true" => true,
                     "false" => false,
-                    _ => todo!(),
+                    _ => throw(Error::ExpectedBoolean (token.get_value())),
                 };
                 Expression::Bool (bln)
             },
-            _ => todo!(),
+            _ => throw(Error::ExpectedLiteral (token.get_value())),
         }
     }
 }

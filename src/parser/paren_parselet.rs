@@ -10,6 +10,11 @@ use crate::parser::{
     prefix::PrefixParselet,
 };
 
+use crate::error::{
+    throw,
+    Error,
+};
+
 
 /// Provides a prefix parselet for parenthetical expressions.
 pub struct ParenParselet;
@@ -20,12 +25,12 @@ impl PrefixParselet for ParenParselet {
         if token.check(TokenType::OpenParen) {
             let expr = match parser.parse(tokenizer) {
                 Some(e) => e,
-                None => todo!(),
+                None => throw(Error::CouldNotParse (token.get_value())),
             };
             
-            let token = tokenizer.peek();
+            let next = tokenizer.peek();
 
-            match token {
+            match next {
                 Some(t) => {
                     if t.get_type() == TokenType::CloseParen {
                         // Consume the token
@@ -33,15 +38,15 @@ impl PrefixParselet for ParenParselet {
                         // the tokenizer has at least one more token to yield
                         tokenizer.next().unwrap();
                     } else {
-                        todo!();
+                        throw(Error::ExpectedCloseParen (t.get_value()));
                     }
                 },
-                None => todo!(),
+                None => throw(Error::UnexpectedEof (token.get_value())),
             }
 
             expr
         } else {
-            todo!();
+            throw(Error::ExpectedOpenParen (token.get_value()));
         }
     }
 }

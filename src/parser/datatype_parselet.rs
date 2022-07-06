@@ -10,6 +10,11 @@ use crate::parser::{
     prefix::PrefixParselet,
 };
 
+use crate::error::{
+    throw,
+    Error,
+};
+
 
 /// Provides a prefix parselet for datatype keywords.
 pub struct DatatypeParselet;
@@ -21,7 +26,7 @@ impl PrefixParselet for DatatypeParselet {
             // Wait to discard the token... maybe it's important
             let identifier = match tokenizer.peek() {
                 Some(i) => i,
-                None => todo!(),
+                None => throw(Error::UnexpectedEof (token.get_value())),
             };
 
             if identifier.get_type() == TokenType::Identifier {
@@ -32,10 +37,10 @@ impl PrefixParselet for DatatypeParselet {
                     datatype: token.get_value()
                 }
             } else {
-                todo!();
+                throw(Error::ExpectedIdentifier (token.get_value()));
             }
         } else {
-            todo!()
+            throw(Error::ExpectedDatatypeKeyword (token.get_value()));
         }
     }
 }

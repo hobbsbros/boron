@@ -10,6 +10,11 @@ use crate::parser::{
     infix::InfixParselet,
 };
 
+use crate::error::{
+    throw,
+    Error,
+};
+
 
 /// Provides a prefix parselet for assignments.
 pub struct AssignmentParselet;
@@ -18,7 +23,7 @@ impl InfixParselet for AssignmentParselet {
     /// Parses an assignment into an expression.
     fn parse(&self, parser: &Parser, tokenizer: &mut Tokenizer, left: Expression, token: Token) -> Expression {
         if token.get_type() != TokenType::Assignment {
-            todo!()
+            throw(Error::CouldNotParse (token.get_value()));
         }
 
         if let Expression::Declaration {
@@ -30,7 +35,7 @@ impl InfixParselet for AssignmentParselet {
             // Evaluate the right hand side of the assignment
             let right_hand_side: Expression = match parser.parse(tokenizer) {
                 Some(r) => r,
-                None => todo!(),
+                None => throw(Error::CouldNotParse (id)),
             };
             // Place the right hand side into an instance of `Expression`
             Expression::Assignment {
@@ -44,7 +49,7 @@ impl InfixParselet for AssignmentParselet {
             // Evaluate the right hand side of the assignment
             let right_hand_side: Expression = match parser.parse(tokenizer) {
                 Some(r) => r,
-                None => todo!(),
+                None => throw(Error::CouldNotParse (id)),
             };
             
             Expression::Reassignment {
@@ -52,8 +57,7 @@ impl InfixParselet for AssignmentParselet {
                 value: Box::new(right_hand_side),
             }
         } else {
-            dbg!(&left);
-            todo!();
+            throw(Error::CouldNotParse (token.get_value()));
         }
     }
 }

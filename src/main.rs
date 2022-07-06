@@ -19,8 +19,6 @@ use std::{
     io::Write,
 };
 
-use colored::*;
-
 pub mod tokenizer;
 pub mod parser;
 pub mod emitter;
@@ -44,14 +42,8 @@ use error::{
     Error,
 };
 
-use version::VERSION;
-
 
 fn main() {
-    println!("{}", "The Boron Compiler".truecolor(102, 153, 204).bold());
-    println!("Version {}", VERSION);
-    println!("");
-
     // Get the input filename.
     let filename: String = match env::args().nth(1) {
         Some(f) => f,
@@ -71,7 +63,9 @@ fn main() {
     let mut emitter = Emitter::new();
     let code = emitter.compile(expressions);
 
-    let output_filename = "out.c".to_string();
+    let mut output_filename = filename.clone();
+    output_filename.truncate(filename.len() - 4);
+    output_filename.push_str(".c");
 
     // Open a file for output
     let mut output = match OpenOptions::new()
@@ -85,7 +79,7 @@ fn main() {
     };
 
     match output.write_all(code.as_bytes()) {
-        Ok(_) => println!("Successfully compiled.  Output written to 'out.c'."),
+        Ok(_) => (),
         Err(_) => throw(Error::CouldNotWriteFile (output_filename.to_owned())),
     }
 }

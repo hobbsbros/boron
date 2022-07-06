@@ -10,26 +10,31 @@ use crate::parser::{
     prefix::PrefixParselet,
 };
 
+use crate::error::{
+    throw,
+    Error,
+};
+
 
 /// Provides a prefix parselet for while loops.
 pub struct WhileParselet;
 
 impl PrefixParselet for WhileParselet {
     /// Parses a while loop into an expression.
-    fn parse(&self, parser: &Parser, tokenizer: &mut Tokenizer, _token: Token) -> Expression {
+    fn parse(&self, parser: &Parser, tokenizer: &mut Tokenizer, token: Token) -> Expression {
         let condition: Expression = match parser.parse(tokenizer) {
             Some(c) => c,
-            None => todo!(),
+            None => throw(Error::CouldNotParse (token.get_value())),
         };
 
         let next = match tokenizer.peek() {
             Some(t) => t,
-            None => todo!(),
+            None => throw(Error::UnexpectedEof (token.get_value())),
         };
 
         match next.get_type() {
             TokenType::OpenBrace => tokenizer.next(),
-            _ => todo!(),
+            _ => throw(Error::ExpectedOpenBrace (next.get_value())),
         };
 
         let mut body: Vec<Expression> = Vec::new();
@@ -42,9 +47,7 @@ impl PrefixParselet for WhileParselet {
 
             let expr: Expression = match parser.parse(tokenizer) {
                 Some(e) => e,
-                None => {
-                    todo!();
-                },
+                None => throw(Error::CouldNotParse (t.get_value())),
             };
             body.push(expr);
         }

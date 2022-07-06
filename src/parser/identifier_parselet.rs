@@ -10,6 +10,11 @@ use crate::parser::{
     prefix::PrefixParselet,
 };
 
+use crate::error::{
+    throw,
+    Error,
+};
+
 
 /// Provides a prefix parselet for identifiers.
 pub struct IdentifierParselet;
@@ -20,7 +25,7 @@ impl PrefixParselet for IdentifierParselet {
         if token.check(TokenType::Identifier) {
             Expression::Identifier (token.get_value())
         } else {
-            todo!();
+            throw(Error::ExpectedIdentifier (token.get_value()));
         }
     }
 }

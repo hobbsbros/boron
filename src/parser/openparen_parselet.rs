@@ -10,13 +10,18 @@ use crate::parser::{
     infix::InfixParselet,
 };
 
+use crate::error::{
+    throw,
+    Error,
+};
+
 
 /// Provides a prefix parselet for function calls.
 pub struct OpenParenParselet;
 
 impl InfixParselet for OpenParenParselet {
     /// Parses a function call into an expression.
-    fn parse(&self, parser: &Parser, tokenizer: &mut Tokenizer, left: Expression, _token: Token) -> Expression {
+    fn parse(&self, parser: &Parser, tokenizer: &mut Tokenizer, left: Expression, token: Token) -> Expression {
         if let Expression::Identifier (i) = left {
             // `i` is the name of the function being called
             let fn_name: String = i;
@@ -33,8 +38,7 @@ impl InfixParselet for OpenParenParselet {
                 let expr: Expression = match parser.parse(tokenizer) {
                     Some(e) => e,
                     None => {
-                        dbg!(&tokenizer.peek());
-                        todo!();
+                        throw(Error::CouldNotParse (token.get_value()));
                     },
                 };
                 args.push(expr);
@@ -45,8 +49,7 @@ impl InfixParselet for OpenParenParselet {
                 args,
             }
         } else {
-            dbg!(&left);
-            todo!();
+            throw(Error::ExpectedIdentifier (token.get_value()));
         }
     }
 }
