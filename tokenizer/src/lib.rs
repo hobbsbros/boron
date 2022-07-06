@@ -49,7 +49,8 @@ impl CharStream {
 /// Provides an abstraction over tokenization behavior.
 #[derive(Clone)]
 pub struct Tokenizer {
-    charstream: CharStream,
+    tokenstream: Vec<Token>,
+    index: usize,
 }
 
 const WHITESPACE: &str = "\n ";
@@ -57,49 +58,42 @@ const SEPARATORS: &str = "\n ():";
 
 /// Provides functions for the `Tokenizer` struct.
 impl Tokenizer {
-    /// Constructs a new token stream from a stream of characters.
-    pub fn from_charstream(charstream: CharStream) -> Self {
+    /// Constructs a new token stream from a string.
+    pub fn new(string: String) -> Self {
+        let mut charstream = CharStream::new(string);
+
+        let mut tokenstream = Vec::new();
+        
+        while let Some(t) = Self::next_token(&mut charstream) {
+            tokenstream.push(t);
+        }
+
         Self {
-            charstream,
+            tokenstream,
+            index: 0,
         }
     }
 
-    /// Constructs a new token stream from a string.
-    pub fn new(string: String) -> Self {
-        let charstream = CharStream::new(string);
-        Self::from_charstream(charstream)
-    }
-
-    /// Gets the next character in the character stream.
-    fn next_char(&mut self) -> Option<char> {
-        self.charstream.next()
-    }
-
-    /// Peeks at the next character in the character stream.
-    fn peek_char(&self) -> Option<char> {
-        self.charstream.peek()
-    }
-
     /// Skips all whitespace (newlines, spaces, and comments)
-    fn skip_whitespace(&mut self) {
-        while let Some(c) = self.peek_char() {
+    fn skip_whitespace(charstream: &mut CharStream) {
+        while let Some(c) = charstream.peek() {
             if WHITESPACE.contains(c) {
-                self.next_char();
+                charstream.next();
             } else {
                 break;
             }
         }
     }
 
-    /// Yields the next token from the token stream.
-    pub fn next(&mut self) -> Option<Token> {
+    /// Yields the next token from the character stream.
+    fn next_token(charstream: &mut CharStream) -> Option<Token> {
         // Skip whitespace
-        self.skip_whitespace();
+        Self::skip_whitespace(charstream);
 
-        if self.peek_char() == Some('#') {
-            while let Some(c) = self.peek_char() {
+        if charstream.peek() == Some('#') {
+            while let Some(c) = charstream.peek() {
                 if c != '\n' {
-                    self.next_char();
+                    charstream.next();
                 } else {
                     break;
                 }
@@ -107,9 +101,9 @@ impl Tokenizer {
         }
 
         // Skip any whitespace again
-        self.skip_whitespace();
+        Self::skip_whitespace(charstream);
 
-        let character = match self.next_char() {
+        let character = match charstream.next() {
             Some(c) => c,
             None => return None,
         };
@@ -136,10 +130,10 @@ impl Tokenizer {
             // Integer or floating-point
             '0'..='9' => {
                 let mut sofar = String::from(character);
-                while let Some(chr) = self.peek_char() {
+                while let Some(chr) = charstream.peek() {
                     if !SEPARATORS.contains(chr) {
                         sofar.push(chr);
-                        self.next_char();
+                        charstream.next();
                     } else {
                         break;
                     }
@@ -158,10 +152,10 @@ impl Tokenizer {
             // Identifier or type keyword
             'A'..='z' => {
                 let mut sofar = String::from(character);
-                while let Some(chr) = self.peek_char() {
+                while let Some(chr) = charstream.peek() {
                     if !SEPARATORS.contains(chr) {
                         sofar.push(chr);
-                        self.next_char();
+                        charstream.next();
                     } else {
                         break;
                     }
@@ -185,15 +179,25 @@ impl Tokenizer {
         Some(token)
     }
 
-    /// Consumes the character stream and yields all tokens.
-    /// Note: this is only used for debugging purposes.
-    pub fn collect(&mut self) -> Vec<Token> {
-        let mut tokens: Vec<Token> = Vec::new();
-        
-        while let Some(t) = self.next() {
-            tokens.push(t);
-        }
+    /// Gets the next token and advances the stream.
+    pub fn next(&mut self) -> Option<Token> {
+        let token = self.peek();
+        self.index += 1;
+        token
+    }
 
-        tokens
+    /// Gets the next token without advancing the stream.
+    pub fn peek(&self) -> Option<Token> {
+        if self.index >= self.tokenstream.len() {
+            None
+        } else {
+            Some(self.tokenstream[self.index].to_owned())
+        }
+    }
+
+    /// Yields all tokens in the stream.
+    /// This *does not* consume the token stream.
+    pub fn collect(&self) -> Vec<Token> {
+        self.tokenstream.to_owned()
     }
 }

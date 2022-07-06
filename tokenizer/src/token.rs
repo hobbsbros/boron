@@ -22,7 +22,7 @@ pub enum TokenType {
 
 
 /// Defines an abstraction over tokens.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Token {
     val: String,
     t: TokenType,

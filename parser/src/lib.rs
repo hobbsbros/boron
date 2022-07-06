@@ -108,7 +108,7 @@ impl Parser {
 
         dbg!(&left);
 
-        let token = match tokenizer.next() {
+        let token = match tokenizer.peek() {
             Some(t) => t,
             None => return Some(left),
         };
@@ -121,6 +121,8 @@ impl Parser {
             Some(p) => p,
             None => return Some(left),
         };
+
+        tokenizer.next();
 
         Some(parselet.parse(self, tokenizer, left, token))
     }
