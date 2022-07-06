@@ -23,12 +23,8 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 name = "boron-lang"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "colored",
- "emitter",
- "error",
- "parser",
- "tokenizer",
- "version",
 ]
 
 [[package]]
@@ -53,22 +49,6 @@ dependencies = [
  "atty",
  "lazy_static",
  "winapi",
-]
-
-[[package]]
-name = "emitter"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "parser",
- "version",
-]
-
-[[package]]
-name = "error"
-version = "0.1.0"
-dependencies = [
- "colored",
 ]
 
 [[package]]
@@ -112,13 +92,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "parser"
-version = "0.1.0"
-dependencies = [
- "tokenizer",
-]
-
-[[package]]
 name = "time"
 version = "0.1.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -128,14 +101,6 @@ dependencies = [
  "wasi",
  "winapi",
 ]
-
-[[package]]
-name = "tokenizer"
-version = "0.1.0"
-
-[[package]]
-name = "version"
-version = "0.1.0"
 
 [[package]]
 name = "wasi"

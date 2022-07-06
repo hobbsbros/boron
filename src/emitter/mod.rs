@@ -9,9 +9,9 @@ use chrono::{
     Local,
 };
 
-use version::VERSION;
+use crate::version::VERSION;
 
-use parser::{
+use crate::parser::{
     Expression,
     TokenType,
 };

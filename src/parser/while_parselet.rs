@@ -1,7 +1,7 @@
 //! Provides a parselet for while loops.
 
 
-use crate::{
+use crate::parser::{
     Parser,
     Expression,
     Token,

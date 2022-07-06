@@ -1,7 +1,7 @@
 //! Provides an interface for infix parselets.
 
 
-use crate::{
+use crate::parser::{
     Parser,
     Expression,
     Token,

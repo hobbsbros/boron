@@ -1,7 +1,7 @@
 //! Provides a parselet for identifiers.
 
 
-use crate::{
+use crate::parser::{
     Parser,
     Expression,
     Token,

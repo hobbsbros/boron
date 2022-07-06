@@ -28,7 +28,7 @@ use binop_parselet::BinOpParselet;
 use paren_parselet::ParenParselet;
 use while_parselet::WhileParselet;
 
-pub use tokenizer::{
+pub use crate::tokenizer::{
     Token,
     TokenType,
     Tokenizer,

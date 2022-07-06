@@ -1,7 +1,7 @@
 //! Provides a parselet for function calls.
 
 
-use crate::{
+use crate::parser::{
     Parser,
     Expression,
     Token,

@@ -21,7 +21,11 @@ use std::{
 
 use colored::*;
 
-
+pub mod tokenizer;
+pub mod parser;
+pub mod emitter;
+pub mod version;
+pub mod error;
 
 use tokenizer::{
     Tokenizer,

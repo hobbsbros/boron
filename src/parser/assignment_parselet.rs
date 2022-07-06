@@ -1,7 +1,7 @@
 //! Provides a parselet for assignments.
 
 
-use crate::{
+use crate::parser::{
     Parser,
     Expression,
     Token,

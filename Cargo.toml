@@ -11,24 +11,4 @@ path = "src/main.rs"
 
 [dependencies]
 colored = "2.0.0"
-tokenizer = {path = "tokenizer"}
-
-
-[dependencies.tokenizer]
-path = "./tokenizer"
-
-
-[dependencies.parser]
-path = "./parser"
-
-
-[dependencies.emitter]
-path = "./emitter"
-
-
-[dependencies.error]
-path = "./error"
-
-
-[dependencies.version]
-path = "./version"
+chrono = "0.4.0"

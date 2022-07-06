@@ -1,7 +1,7 @@
 //! Provides an interface for prefix parselets.
 
 
-use crate::{
+use crate::parser::{
     Parser,
     Expression,
     Token,
