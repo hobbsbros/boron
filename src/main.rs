@@ -46,4 +46,5 @@ fn main() {
 
     dbg!(parser.parse(&mut tokenizer));
     dbg!(parser.parse(&mut tokenizer));
+    dbg!(parser.parse(&mut tokenizer));
 }

@@ -6,7 +6,6 @@ pub mod prefix;
 
 pub mod identifier_parselet;
 pub mod datatype_parselet;
-pub mod declaration_parselet;
 pub mod assignment_parselet;
 pub mod literal_parselet;
 
@@ -18,7 +17,6 @@ use prefix::PrefixParselet;
 
 use identifier_parselet::IdentifierParselet;
 use datatype_parselet::DatatypeParselet;
-use declaration_parselet::DeclarationParselet;
 use assignment_parselet::AssignmentParselet;
 use literal_parselet::LiteralParselet;
 
@@ -79,7 +77,6 @@ impl Parser {
         prefix_parselets.insert(TokenType::Int, Box::new(LiteralParselet {}));
         prefix_parselets.insert(TokenType::Float, Box::new(LiteralParselet {}));
         prefix_parselets.insert(TokenType::Bool, Box::new(LiteralParselet {}));
-        infix_parselets.insert(TokenType::Identifier, Box::new(DeclarationParselet {}));
         infix_parselets.insert(TokenType::Assignment, Box::new(AssignmentParselet {}));
 
         Self {
@@ -96,8 +93,6 @@ impl Parser {
             None => return None,
         };
 
-        dbg!(&token);
-
         // Get the proper prefix parselet from the type of the given token.
         let parselet: &Box<dyn PrefixParselet> = match self.prefix_parselets.get(&token.get_type()) {
             Some(p) => p,
@@ -106,14 +101,10 @@ impl Parser {
 
         let left = parselet.parse(self, tokenizer, token);
 
-        dbg!(&left);
-
         let token = match tokenizer.peek() {
             Some(t) => t,
             None => return Some(left),
         };
-
-        dbg!(&token);
 
         // Get the proper infix parselet from the type of the given token,
         // or return the current expression.
