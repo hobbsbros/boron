@@ -12,6 +12,7 @@ pub mod openparen_parselet;
 pub mod binop_parselet;
 pub mod paren_parselet;
 pub mod while_parselet;
+pub mod unaryop_parselet;
 
 
 use std::collections::HashMap;
@@ -27,6 +28,7 @@ use openparen_parselet::OpenParenParselet;
 use binop_parselet::BinOpParselet;
 use paren_parselet::ParenParselet;
 use while_parselet::WhileParselet;
+use unaryop_parselet::UnaryOpParselet;
 
 pub use crate::tokenizer::{
     Token,
@@ -48,6 +50,11 @@ pub enum Expression {
     Identifier (String),
     // Datatype keyword
     Type (String),
+    // Unary operation
+    UnaryOp {
+        op: TokenType,
+        expr: Box<Expression>,
+    },
     // Binary operation
     BinOp {
         left: Box<Expression>,
@@ -103,6 +110,8 @@ impl Parser {
         prefix_parselets.insert(TokenType::Float, Box::new(LiteralParselet {}));
         prefix_parselets.insert(TokenType::Bool, Box::new(LiteralParselet {}));
         prefix_parselets.insert(TokenType::OpenParen, Box::new(ParenParselet {}));
+        prefix_parselets.insert(TokenType::Minus, Box::new(UnaryOpParselet {}));
+        prefix_parselets.insert(TokenType::Not, Box::new(UnaryOpParselet {}));
         infix_parselets.insert(TokenType::Assignment, Box::new(AssignmentParselet {}));
         infix_parselets.insert(TokenType::OpenParen, Box::new(OpenParenParselet {}));
         infix_parselets.insert(TokenType::Plus, Box::new(BinOpParselet {}));

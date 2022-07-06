@@ -45,11 +45,24 @@ impl Emitter {
             TokenType::Divide => "/",
             TokenType::Greater => ">",
             TokenType::Less => "<",
-            TokenType::Equal => "=",
-            _ => throw(Error::CouldNotEmit ("binary operation".to_string())),
+            TokenType::Equal => "==",
+            TokenType::Not => "!",
+            _ => throw(Error::CouldNotEmit ("operation".to_string())),
         };
 
         op_str.to_owned()
+    }
+
+    /// Emits a datatype name based on the C name.
+    fn match_type(&self, datatype: String) -> String {
+        let type_str = match datatype.as_str() {
+            "int" => "int",
+            "flt" => "float",
+            "bln" => "bool",
+            _ => datatype.as_str(),
+        };
+
+        type_str.to_owned()
     }
 
     /// Emits a `printf` expression.
@@ -65,11 +78,11 @@ impl Emitter {
                         emitted.push_str("\"%d\\n\", ");
                         emitted.push_str(&id);
                     },
-                    "float" => {
+                    "flt" => {
                         emitted.push_str("\"%f\\n\", ");
                         emitted.push_str(&id);
                     },
-                    "bool" => {
+                    "bln" => {
                         emitted.push_str(&id);
                         emitted.push_str(" ? \"true\\n\" : \"false\\n\"");
                     }
@@ -93,6 +106,10 @@ impl Emitter {
             Expression::Bool (b) => format!("{}", b),
             Expression::Identifier (s) => format!("{}", s),
             Expression::Type (t) => throw(Error::CouldNotEmit (t.to_string())),
+            Expression::UnaryOp {
+                op: o,
+                expr: e,
+            } => format!("{}{}", self.match_op(*o), self.emit(&*e)),
             Expression::BinOp {
                 left: l,
                 op: o,
@@ -101,12 +118,12 @@ impl Emitter {
             Expression::Declaration {
                 datatype: d,
                 identifier: i,
-            } => format!("{} {}", d, i),
+            } => format!("{} {}", self.match_type(d.to_string()), i),
             Expression::Assignment {
                 datatype: d,
                 identifier: i,
                 value: e,
-            } => format!("{} {} = {}", d, i, self.emit(&*e)),
+            } => format!("{} {} = {}", self.match_type(d.to_string()), i, self.emit(&*e)),
             Expression::Reassignment {
                 identifier: i,
                 value: e,
