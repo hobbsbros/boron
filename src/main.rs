@@ -11,8 +11,12 @@
 
 
 use std::{
-    fs,
+    fs::{
+        self,
+        OpenOptions,
+    },
     env,
+    io::Write,
 };
 
 use tokenizer::{
@@ -21,6 +25,10 @@ use tokenizer::{
 
 use parser::{
     Parser,
+};
+
+use emitter::{
+    Emitter,
 };
 
 
@@ -41,8 +49,24 @@ fn main() {
     let mut tokenizer = Tokenizer::new(code);
 
     let parser = Parser::new();
-
     let expressions = parser.parse_all(&mut tokenizer);
 
-    dbg!(&expressions);
+    let mut emitter = Emitter::new();
+    let code = emitter.compile(expressions);
+
+    // Open a file for output
+    let mut output = match OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open("out.c")
+    {
+        Ok(f) => f,
+        Err(_) => todo!(),
+    };
+
+    match output.write_all(code.as_bytes()) {
+        Ok(_) => println!("Successfully compiled.  Output written to 'out.c'."),
+        Err(_) => todo!(),
+    }
 }
