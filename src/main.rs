@@ -48,8 +48,6 @@ fn main() {
 
     let mut tokenizer = Tokenizer::new(code);
 
-    dbg!(&tokenizer.collect());
-
     let parser = Parser::new();
     let expressions = parser.parse_all(&mut tokenizer);
 

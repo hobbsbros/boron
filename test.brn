@@ -1,6 +1,7 @@
 # The Boron Programming Language
 
-# Another random comment
+# Compute the first 10 Fibonacci numbers
+
 
 int x: 1
 int y: 0
