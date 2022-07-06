@@ -9,6 +9,7 @@ pub mod datatype_parselet;
 pub mod assignment_parselet;
 pub mod literal_parselet;
 pub mod openparen_parselet;
+pub mod binop_parselet;
 
 
 use std::collections::HashMap;
@@ -21,6 +22,7 @@ use datatype_parselet::DatatypeParselet;
 use assignment_parselet::AssignmentParselet;
 use literal_parselet::LiteralParselet;
 use openparen_parselet::OpenParenParselet;
+use binop_parselet::BinOpParselet;
 
 pub use tokenizer::{
     Token,
@@ -42,6 +44,12 @@ pub enum Expression {
     Identifier (String),
     // Datatype keyword
     Type (String),
+    // Binary operation
+    BinOp {
+        left: Box<Expression>,
+        op: TokenType,
+        right: Box<Expression>,
+    },
     // Variable declaration
     Declaration {
         datatype: String,
@@ -86,6 +94,10 @@ impl Parser {
         prefix_parselets.insert(TokenType::Bool, Box::new(LiteralParselet {}));
         infix_parselets.insert(TokenType::Assignment, Box::new(AssignmentParselet {}));
         infix_parselets.insert(TokenType::OpenParen, Box::new(OpenParenParselet {}));
+        infix_parselets.insert(TokenType::Plus, Box::new(BinOpParselet {}));
+        infix_parselets.insert(TokenType::Minus, Box::new(BinOpParselet {}));
+        infix_parselets.insert(TokenType::Multiply, Box::new(BinOpParselet {}));
+        infix_parselets.insert(TokenType::Divide, Box::new(BinOpParselet {}));
 
         Self {
             prefix_parselets,

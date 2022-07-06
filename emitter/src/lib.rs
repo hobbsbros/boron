@@ -13,6 +13,7 @@ use version::VERSION;
 
 use parser::{
     Expression,
+    TokenType,
 };
 
 
@@ -28,6 +29,19 @@ impl Emitter {
             variables: HashMap::new(),
             code: String::new(),
         }
+    }
+
+    /// Emits an operation symbol based on a token type.
+    fn match_op(&self, op: TokenType) -> String {
+        let op_str = match op {
+            TokenType::Plus => "+",
+            TokenType::Minus => "-",
+            TokenType::Multiply => "*",
+            TokenType::Divide => "/",
+            _ => todo!(),
+        };
+
+        op_str.to_owned()
     }
 
     /// Emits a `printf` expression.
@@ -71,6 +85,14 @@ impl Emitter {
             Expression::Bool (b) => format!("{}", b),
             Expression::Identifier (s) => format!("{}", s),
             Expression::Type (_) => todo!(),
+            Expression::BinOp {
+                left: l,
+                op: o,
+                right: r,
+            } => {
+                println!("yeehaw");
+                format!("{} {} {}", self.emit(&*l), self.match_op(*o), self.emit(&*r))
+            },
             Expression::Declaration {
                 datatype: d,
                 identifier: i,
