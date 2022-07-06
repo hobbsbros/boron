@@ -19,6 +19,10 @@ use std::{
     io::Write,
 };
 
+use colored::*;
+
+
+
 use tokenizer::{
     Tokenizer,
 };
@@ -31,14 +35,23 @@ use emitter::{
     Emitter,
 };
 
+use error::{
+    throw,
+    Error,
+};
+
+use version::VERSION;
+
 
 fn main() {
-    println!("Boron Compiler");
+    println!("{}", "The Boron Compiler".truecolor(102, 153, 204).bold());
+    println!("Version {}", VERSION);
+    println!("");
 
     // Get the input filename.
     let filename: String = match env::args().nth(1) {
         Some(f) => f,
-        None => todo!(),
+        None => throw(Error::NoFileProvided),
     };
 
     let code = match fs::read_to_string(&filename) {
