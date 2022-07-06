@@ -79,6 +79,10 @@ impl Tokenizer {
         while let Some(c) = charstream.peek() {
             if WHITESPACE.contains(c) {
                 charstream.next();
+            } else if c == '#' {
+                while charstream.peek() != Some('\n') {
+                    charstream.next();
+                }
             } else {
                 break;
             }
@@ -88,19 +92,6 @@ impl Tokenizer {
     /// Yields the next token from the character stream.
     fn next_token(charstream: &mut CharStream) -> Option<Token> {
         // Skip whitespace
-        Self::skip_whitespace(charstream);
-
-        if charstream.peek() == Some('#') {
-            while let Some(c) = charstream.peek() {
-                if c != '\n' {
-                    charstream.next();
-                } else {
-                    break;
-                }
-            }
-        }
-
-        // Skip any whitespace again
         Self::skip_whitespace(charstream);
 
         let character = match charstream.next() {

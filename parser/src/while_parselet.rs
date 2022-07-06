@@ -17,14 +17,10 @@ pub struct WhileParselet;
 impl PrefixParselet for WhileParselet {
     /// Parses a while loop into an expression.
     fn parse(&self, parser: &Parser, tokenizer: &mut Tokenizer, _token: Token) -> Expression {
-        println!("while");
-
         let condition: Expression = match parser.parse(tokenizer) {
             Some(c) => c,
             None => todo!(),
         };
-
-        dbg!(&condition);
 
         let next = match tokenizer.peek() {
             Some(t) => t,
@@ -43,8 +39,6 @@ impl PrefixParselet for WhileParselet {
             if t.get_type() == TokenType::CloseBrace {
                 break;
             }
-
-            dbg!(&t);
 
             let expr: Expression = match parser.parse(tokenizer) {
                 Some(e) => e,

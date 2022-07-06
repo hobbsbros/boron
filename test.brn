@@ -1,9 +1,17 @@
 # The Boron Programming Language
 
+# Another random comment
 
-int x: 0
+int x: 1
+int y: 0
+int z: 0
 
-while x < 10 {
-    print(x)
-    x: x + 1
+int count: 0
+
+while count < 10 {
+    z = x + y
+    print(z)
+    x: y
+    y: z
+    count: count + 1
 }
