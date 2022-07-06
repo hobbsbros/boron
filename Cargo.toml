@@ -1,6 +1,7 @@
 [package]
 name = "boron-lang"
 description = "A simple, efficient, compiled programming language."
+license = "MIT"
 version = "0.1.0"
 edition = "2021"
 
