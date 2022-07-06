@@ -8,6 +8,7 @@ pub mod identifier_parselet;
 pub mod datatype_parselet;
 pub mod assignment_parselet;
 pub mod literal_parselet;
+pub mod openparen_parselet;
 
 
 use std::collections::HashMap;
@@ -19,6 +20,7 @@ use identifier_parselet::IdentifierParselet;
 use datatype_parselet::DatatypeParselet;
 use assignment_parselet::AssignmentParselet;
 use literal_parselet::LiteralParselet;
+use openparen_parselet::OpenParenParselet;
 
 pub use tokenizer::{
     Token,
@@ -78,6 +80,7 @@ impl Parser {
         prefix_parselets.insert(TokenType::Float, Box::new(LiteralParselet {}));
         prefix_parselets.insert(TokenType::Bool, Box::new(LiteralParselet {}));
         infix_parselets.insert(TokenType::Assignment, Box::new(AssignmentParselet {}));
+        infix_parselets.insert(TokenType::OpenParen, Box::new(OpenParenParselet {}));
 
         Self {
             prefix_parselets,
@@ -116,5 +119,16 @@ impl Parser {
         tokenizer.next();
 
         Some(parselet.parse(self, tokenizer, left, token))
+    }
+
+    /// Parses the program into a list of expressions.
+    pub fn parse_all(&self, tokenizer: &mut Tokenizer) -> Vec<Expression> {
+        let mut expressions = Vec::new();
+
+        while let Some(e) = self.parse(tokenizer) {
+            expressions.push(e);
+        }
+
+        expressions
     }
 }

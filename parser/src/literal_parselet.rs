@@ -16,7 +16,7 @@ pub struct LiteralParselet;
 
 impl PrefixParselet for LiteralParselet {
     /// Parses a literal into an expression.
-    fn parse(&self, parser: &Parser, tokenizer: &mut Tokenizer, token: Token) -> Expression {
+    fn parse(&self, _parser: &Parser, _tokenizer: &mut Tokenizer, token: Token) -> Expression {
         match token.get_type() {
             TokenType::Int => {
                 // It's ok to use `unwrap` here because our tokenizer checked that this could

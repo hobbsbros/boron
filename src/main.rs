@@ -40,11 +40,9 @@ fn main() {
 
     let mut tokenizer = Tokenizer::new(code);
 
-    dbg!(&tokenizer.clone().collect());
-
     let parser = Parser::new();
 
-    dbg!(parser.parse(&mut tokenizer));
-    dbg!(parser.parse(&mut tokenizer));
-    dbg!(parser.parse(&mut tokenizer));
+    let expressions = parser.parse_all(&mut tokenizer);
+
+    dbg!(&expressions);
 }

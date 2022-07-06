@@ -53,8 +53,8 @@ pub struct Tokenizer {
     index: usize,
 }
 
-const WHITESPACE: &str = "\n ";
-const SEPARATORS: &str = "\n ():";
+const WHITESPACE: &str = "\n ,";
+const SEPARATORS: &str = "\n ():,";
 
 /// Provides functions for the `Tokenizer` struct.
 impl Tokenizer {
