@@ -1,6 +1,9 @@
 # The Boron Programming Language
 
 
-int x: 3
-x: x + 1
-print(x)
+int x: 0
+
+while (x < 10) (
+    print(x)
+    x = x + 1
+)

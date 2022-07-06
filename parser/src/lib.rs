@@ -10,6 +10,7 @@ pub mod assignment_parselet;
 pub mod literal_parselet;
 pub mod openparen_parselet;
 pub mod binop_parselet;
+pub mod paren_parselet;
 
 
 use std::collections::HashMap;
@@ -23,6 +24,7 @@ use assignment_parselet::AssignmentParselet;
 use literal_parselet::LiteralParselet;
 use openparen_parselet::OpenParenParselet;
 use binop_parselet::BinOpParselet;
+use paren_parselet::ParenParselet;
 
 pub use tokenizer::{
     Token,
@@ -92,6 +94,7 @@ impl Parser {
         prefix_parselets.insert(TokenType::Int, Box::new(LiteralParselet {}));
         prefix_parselets.insert(TokenType::Float, Box::new(LiteralParselet {}));
         prefix_parselets.insert(TokenType::Bool, Box::new(LiteralParselet {}));
+        prefix_parselets.insert(TokenType::OpenParen, Box::new(ParenParselet {}));
         infix_parselets.insert(TokenType::Assignment, Box::new(AssignmentParselet {}));
         infix_parselets.insert(TokenType::OpenParen, Box::new(OpenParenParselet {}));
         infix_parselets.insert(TokenType::Plus, Box::new(BinOpParselet {}));

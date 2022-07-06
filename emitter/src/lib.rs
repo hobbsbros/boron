@@ -89,10 +89,7 @@ impl Emitter {
                 left: l,
                 op: o,
                 right: r,
-            } => {
-                println!("yeehaw");
-                format!("{} {} {}", self.emit(&*l), self.match_op(*o), self.emit(&*r))
-            },
+            } => format!("{} {} {}", self.emit(&*l), self.match_op(*o), self.emit(&*r)),
             Expression::Declaration {
                 datatype: d,
                 identifier: i,
