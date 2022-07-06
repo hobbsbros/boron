@@ -25,6 +25,8 @@ impl InfixParselet for AssignmentParselet {
             datatype: d,
             identifier: id,
         } = left {
+            // This is a declaration
+
             // Evaluate the right hand side of the assignment
             let right_hand_side: Expression = match parser.parse(tokenizer) {
                 Some(r) => r,
@@ -36,9 +38,22 @@ impl InfixParselet for AssignmentParselet {
                 identifier: id,
                 value: Box::new(right_hand_side),
             }
+        } else if let Expression::Identifier (id) = left {
+            // This is a reassignment
+
+            // Evaluate the right hand side of the assignment
+            let right_hand_side: Expression = match parser.parse(tokenizer) {
+                Some(r) => r,
+                None => todo!(),
+            };
+            
+            Expression::Reassignment {
+                identifier: id,
+                value: Box::new(right_hand_side),
+            }
         } else {
             dbg!(&left);
-            todo!()
+            todo!();
         }
     }
 }

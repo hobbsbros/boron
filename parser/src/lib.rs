@@ -53,6 +53,11 @@ pub enum Expression {
         identifier: String,
         value: Box<Expression>,
     },
+    // Variable reassignment
+    Reassignment {
+        identifier: String,
+        value: Box<Expression>,
+    },
     // Function call
     FnCall {
         name: String,

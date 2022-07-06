@@ -1,6 +1,6 @@
-# Comment
+# The Boron Programming Language
 
-int x: 5
-float y: 3.14
-bool z: false
-print(x, y, z)
+
+int x: 3
+x: x + 1
+print(x)
