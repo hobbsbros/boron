@@ -166,9 +166,9 @@ impl Tokenizer {
                 }
 
                 let token = match sofar.as_str() {
-                    "int" => Token::new(sofar, TokenType::IntType),
-                    "float" => Token::new(sofar, TokenType::FloatType),
-                    "bool" => Token::new(sofar, TokenType::BoolType),
+                    "int" => Token::new(sofar, TokenType::Type),
+                    "float" => Token::new(sofar, TokenType::Type),
+                    "bool" => Token::new(sofar, TokenType::Type),
                     "true" => Token::new(sofar, TokenType::Bool),
                     "false" => Token::new(sofar, TokenType::Bool),
                     _ => Token::new(sofar, TokenType::Identifier),

@@ -9,6 +9,6 @@ use crate::{
 
 
 /// Defines shared behavior for prefix parselets.
-pub trait Prefix {
-    fn parse(&mut self, parser: &Parser, token: Token) -> Expression;
+pub trait PrefixParselet {
+    fn parse(&self, parser: &Parser, token: Token) -> Expression;
 }

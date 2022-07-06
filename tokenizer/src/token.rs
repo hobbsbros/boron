@@ -2,7 +2,7 @@
 
 
 /// Enumerates token types available.
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
 pub enum TokenType {
     OpenParen,
     CloseParen,
@@ -16,9 +16,7 @@ pub enum TokenType {
     Multiply,
     Divide,
     Not,
-    IntType,
-    FloatType,
-    BoolType,
+    Type,
     Unknown,
 }
 

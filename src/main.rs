@@ -1,4 +1,14 @@
 //! A simple compiler for the Boron programming language.
+//! 
+//! The Boron compiler emits standard C code, which can subsequently
+//! be compiled by a compiler of your choice.  The authors of the
+//! Boron compiler recommends GCC.  Integration with a C compiler (so
+//! that the Boron compiler emits machine code) may be included in
+//! a future update.
+//! 
+//! One benefit of emitting standard C code is that the Boron compiler
+//! can remain light and portable.
+
 
 use std::{
     fs,
