@@ -30,7 +30,7 @@ pub use tokenizer::{
 
 
 /// Defines possible expressions in Boron.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Expression {
     // 32-bit integer
     Int (i32),

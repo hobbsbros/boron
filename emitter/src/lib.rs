@@ -1,12 +1,15 @@
 //! A simple C emitter for the Boron compiler.
 
 
+use std::collections::HashMap;
+
 use parser::{
     Expression,
 };
 
 
 pub struct Emitter {
+    variables: HashMap<String, String>,
     code: String,
 }
 
@@ -14,12 +17,45 @@ impl Emitter {
     /// Constructs a new emitter.
     pub fn new() -> Self {
         Self {
+            variables: HashMap::new(),
             code: String::new(),
         }
     }
 
+    /// Emits a `printf` expression.
+    fn emit_printf(&self, args: Vec<Expression>) -> String {
+        // "print" is a special case due to idiosyncracies of C & Boron
+        let mut emitted = String::new();
+        for arg in args {
+            if let Expression::Identifier (id) = arg {
+                emitted.push_str("printf(");
+                // TODO: don't use unwrap here.
+                match self.variables.get(&id).unwrap().as_str() {
+                    "int" => {
+                        emitted.push_str("\"%d\\n\", ");
+                        emitted.push_str(&id);
+                    },
+                    "float" => {
+                        emitted.push_str("\"%f\\n\", ");
+                        emitted.push_str(&id);
+                    },
+                    "bool" => {
+                        emitted.push_str(&id);
+                        emitted.push_str(" ? \"true\\n\" : \"false\\n\"");
+                    }
+                    _ => todo!(),
+                }
+                emitted.push_str(");\n\t");
+            }
+        }
+        emitted.pop();
+        emitted.pop();
+        emitted.pop();
+        emitted
+    }
+
     /// Emits an expression.
-    fn emit(expr: &Expression) -> String {
+    fn emit(&self, expr: &Expression) -> String {
         // Emit the given expression as a string
         let value: String = match expr {
             Expression::Int (i) => format!("{}", i),
@@ -35,21 +71,28 @@ impl Emitter {
                 datatype: d,
                 identifier: i,
                 value: e,
-            } => format!("{} {} = {}", d, i, Emitter::emit(&*e)),
+            } => format!("{} {} = {}", d, i, self.emit(&*e)),
             Expression::FnCall {
                 name: n,
                 args: a,
             } => {
-                let mut emitted = format!("{}(", n).to_string();
-                // Emit each argument recursively
-                for (idx, arg) in a.iter().enumerate() {
-                    emitted.push_str(&format!("{}", Emitter::emit(arg)));
-                    if idx < a.len() - 1 {
-                        emitted.push('\n');
+                match n.as_str() {
+                    "print" => {
+                        self.emit_printf(a.clone())
+                    },
+                    _ => {
+                        let mut emitted = format!("{}(", n).to_string();
+                        // Emit each argument recursively
+                        for (idx, arg) in a.iter().enumerate() {
+                            emitted.push_str(&format!("{}", self.emit(arg)));
+                            if idx < a.len() - 1 {
+                                emitted.push('\n');
+                            }
+                        }
+                        emitted.push(')');
+                        emitted.to_owned()
                     }
                 }
-                emitted.push(')');
-                emitted.to_owned()
             },
         };
 
@@ -69,14 +112,33 @@ impl Emitter {
         self.code.push('\n');
     }
 
+    /// Emits a section of code by concatenating to the C program.
+    fn write(&mut self, s: &str) {
+        self.code.push_str(s);
+    }
+
+
     /// Compiles a list of expressions into a string of C code.
     pub fn compile(&mut self, expressions: Vec<Expression>) -> String {
+        // Create a list of variables
+        for expression in &expressions {
+            if let Expression::Assignment {
+                datatype: d,
+                identifier: i,
+                value: _,
+            } = expression {
+                self.variables.insert(i.clone(), d.clone());
+            }
+        }
+
         // Emit header file information
         self.writeln("#include <stdio.h>");
+        self.writeln("#include <stdbool.h>");
         self.writeln("int main(void) {");
 
         for expression in expressions {
-            let statement = Emitter::emit(&expression);
+            let statement = self.emit(&expression);
+            self.write("\t");
             self.writescln(&statement);
         }
 
