@@ -156,12 +156,48 @@ impl Emitter {
                 condition: c,
                 body: b,
             } => {
-                let mut emitted = format!("while (");
+                let mut emitted = "while (".to_string();
                 // Emit the condition
                 emitted.push_str(&self.emit(&*c));
                 emitted.push_str(") {\n");
                 // Emit each expression in the while loop
                 for expr in b.iter() {
+                    emitted.push_str(&format!("{};\n", self.emit(expr)));
+                }
+                emitted.push_str("}");
+                emitted.to_owned()
+            },
+            Expression::If {
+                condition: c,
+                body: b,
+            } => {
+                let mut emitted = "if (".to_string();
+                // Emit the condition
+                emitted.push_str(&self.emit(&*c));
+                emitted.push_str(") {\n");
+                // Emit each expression in the if statement
+                for expr in b.iter() {
+                    emitted.push_str(&format!("{};\n", self.emit(expr)));
+                }
+                emitted.push_str("}");
+                emitted.to_owned()
+            },
+            Expression::IfElse {
+                condition: c,
+                body_true: t,
+                body_false: f,
+            } => {
+                let mut emitted = "if (".to_string();
+                // Emit the condition
+                emitted.push_str(&self.emit(&*c));
+                emitted.push_str(") {\n");
+                // Emit each expression in the if statement
+                for expr in t.iter() {
+                    emitted.push_str(&format!("{};\n", self.emit(expr)));
+                }
+                emitted.push_str("} else {\n");
+                // Emit each expression in the else statement
+                for expr in f.iter() {
                     emitted.push_str(&format!("{};\n", self.emit(expr)));
                 }
                 emitted.push_str("}");

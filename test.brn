@@ -9,7 +9,7 @@ int z: 0
 
 int count: 0
 
-whl count <= 10 {
+while count <= 10 {
     z: x + y
     print(z)
     x: y

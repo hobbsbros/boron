@@ -39,7 +39,7 @@ impl PrefixParselet for WhileParselet {
 
         let mut body: Vec<Expression> = Vec::new();
 
-        // Until we find a closing parenthesis, parse each expression in the loop
+        // Until we find a closing curly brace, parse each expression in the loop
         while let Some(t) = tokenizer.peek() {
             if t.get_type() == TokenType::CloseBrace {
                 tokenizer.next();

@@ -25,6 +25,8 @@ pub enum TokenType {
     Not,
     Type,
     While,
+    If,
+    Else,
     Unknown,
 }
 

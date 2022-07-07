@@ -184,7 +184,9 @@ impl Tokenizer {
                     "bln" => Token::new(sofar, TokenType::Type),
                     "true" => Token::new(sofar, TokenType::Bool),
                     "false" => Token::new(sofar, TokenType::Bool),
-                    "whl" => Token::new(sofar, TokenType::While),
+                    "while" => Token::new(sofar, TokenType::While),
+                    "if" => Token::new(sofar, TokenType::If),
+                    "else" => Token::new(sofar, TokenType::Else),
                     _ => Token::new(sofar, TokenType::Identifier),
                 };
 

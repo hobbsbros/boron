@@ -13,6 +13,7 @@ pub mod binop_parselet;
 pub mod paren_parselet;
 pub mod while_parselet;
 pub mod unaryop_parselet;
+pub mod ifelse_parselet;
 
 
 use std::collections::HashMap;
@@ -29,6 +30,7 @@ use binop_parselet::BinOpParselet;
 use paren_parselet::ParenParselet;
 use while_parselet::WhileParselet;
 use unaryop_parselet::UnaryOpParselet;
+use ifelse_parselet::IfElseParselet;
 
 pub use crate::tokenizer::{
     Token,
@@ -87,6 +89,17 @@ pub enum Expression {
         condition: Box<Expression>,
         body: Vec<Expression>,
     },
+    // If statement
+    If {
+        condition: Box<Expression>,
+        body: Vec<Expression>,
+    },
+    // If/else statement
+    IfElse {
+        condition: Box<Expression>,
+        body_true: Vec<Expression>,
+        body_false: Vec<Expression>,
+    },
 }
 
 
@@ -106,6 +119,7 @@ impl Parser {
         prefix_parselets.insert(TokenType::Type, Box::new(DatatypeParselet {}));
         prefix_parselets.insert(TokenType::Identifier, Box::new(IdentifierParselet {}));
         prefix_parselets.insert(TokenType::While, Box::new(WhileParselet {}));
+        prefix_parselets.insert(TokenType::If, Box::new(IfElseParselet {}));
         prefix_parselets.insert(TokenType::Int, Box::new(LiteralParselet {}));
         prefix_parselets.insert(TokenType::Float, Box::new(LiteralParselet {}));
         prefix_parselets.insert(TokenType::Bool, Box::new(LiteralParselet {}));
