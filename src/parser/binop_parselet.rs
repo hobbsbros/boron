@@ -35,6 +35,8 @@ impl InfixParselet for BinOpParselet {
             | TokenType::Greater
             | TokenType::Less
             | TokenType::Equal
+            | TokenType::GreaterEqual
+            | TokenType::LessEqual
             => {
                 // No problem!
             },

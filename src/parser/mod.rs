@@ -120,6 +120,8 @@ impl Parser {
         infix_parselets.insert(TokenType::Divide, Box::new(BinOpParselet {}));
         infix_parselets.insert(TokenType::Greater, Box::new(BinOpParselet {}));
         infix_parselets.insert(TokenType::Less, Box::new(BinOpParselet {}));
+        infix_parselets.insert(TokenType::GreaterEqual, Box::new(BinOpParselet {}));
+        infix_parselets.insert(TokenType::LessEqual, Box::new(BinOpParselet {}));
         infix_parselets.insert(TokenType::Equal, Box::new(BinOpParselet {}));
 
         Self {

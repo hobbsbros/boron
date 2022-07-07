@@ -47,6 +47,8 @@ impl Emitter {
             TokenType::Less => "<",
             TokenType::Equal => "==",
             TokenType::Not => "!",
+            TokenType::GreaterEqual => ">=",
+            TokenType::LessEqual => "<=",
             _ => throw(Error::CouldNotEmit ("operation".to_string())),
         };
 

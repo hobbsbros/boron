@@ -123,9 +123,25 @@ impl Tokenizer {
             // Not
             '!' => Token::new(character.to_string(), TokenType::Not),
             // Greater
-            '>' => Token::new(character.to_string(), TokenType::Greater),
+            '>' => {
+                match charstream.peek() {
+                    Some('=') => {
+                        charstream.next();
+                        Token::new(">=".to_string(), TokenType::GreaterEqual)
+                    },
+                    _ => Token::new(character.to_string(), TokenType::Greater)
+                }
+            },
             // Less
-            '<' => Token::new(character.to_string(), TokenType::Less),
+            '<' => {
+                match charstream.peek() {
+                    Some('=') => {
+                        charstream.next();
+                        Token::new("<=".to_string(), TokenType::LessEqual)
+                    },
+                    _ => Token::new(character.to_string(), TokenType::Less)
+                }
+            }
             // Equal
             '=' => Token::new(character.to_string(), TokenType::Equal),
             // Integer or floating-point

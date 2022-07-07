@@ -19,6 +19,8 @@ pub enum TokenType {
     Divide,
     Greater,
     Less,
+    GreaterEqual,
+    LessEqual,
     Equal,
     Not,
     Type,

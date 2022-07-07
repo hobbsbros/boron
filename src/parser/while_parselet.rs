@@ -42,6 +42,7 @@ impl PrefixParselet for WhileParselet {
         // Until we find a closing parenthesis, parse each expression in the loop
         while let Some(t) = tokenizer.peek() {
             if t.get_type() == TokenType::CloseBrace {
+                tokenizer.next();
                 break;
             }
 
