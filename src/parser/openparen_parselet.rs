@@ -35,7 +35,7 @@ impl InfixParselet for OpenParenParselet {
                     break;
                 }
 
-                let expr: Expression = match parser.parse(tokenizer) {
+                let expr: Expression = match parser.parse(token.get_type().into(), tokenizer) {
                     Some(e) => e,
                     None => {
                         throw(Error::CouldNotParse (token.get_value()));

@@ -22,7 +22,7 @@ pub struct WhileParselet;
 impl PrefixParselet for WhileParselet {
     /// Parses a while loop into an expression.
     fn parse(&self, parser: &Parser, tokenizer: &mut Tokenizer, token: Token) -> Expression {
-        let condition: Expression = match parser.parse(tokenizer) {
+        let condition: Expression = match parser.parse(token.get_type().into(), tokenizer) {
             Some(c) => c,
             None => throw(Error::CouldNotParse (token.get_value())),
         };
@@ -46,7 +46,7 @@ impl PrefixParselet for WhileParselet {
                 break;
             }
 
-            let expr: Expression = match parser.parse(tokenizer) {
+            let expr: Expression = match parser.parse(t.get_type().into(), tokenizer) {
                 Some(e) => e,
                 None => throw(Error::CouldNotParse (t.get_value())),
             };

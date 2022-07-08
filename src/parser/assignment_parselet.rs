@@ -33,7 +33,7 @@ impl InfixParselet for AssignmentParselet {
             // This is a declaration
 
             // Evaluate the right hand side of the assignment
-            let right_hand_side: Expression = match parser.parse(tokenizer) {
+            let right_hand_side: Expression = match parser.parse(token.get_type().into(), tokenizer) {
                 Some(r) => r,
                 None => throw(Error::CouldNotParse (id)),
             };
@@ -47,7 +47,7 @@ impl InfixParselet for AssignmentParselet {
             // This is a reassignment
 
             // Evaluate the right hand side of the assignment
-            let right_hand_side: Expression = match parser.parse(tokenizer) {
+            let right_hand_side: Expression = match parser.parse(token.get_type().into(), tokenizer) {
                 Some(r) => r,
                 None => throw(Error::CouldNotParse (id)),
             };

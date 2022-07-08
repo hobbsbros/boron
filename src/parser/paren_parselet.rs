@@ -23,7 +23,7 @@ impl PrefixParselet for ParenParselet {
     /// Parses a parenthetical into an expression.
     fn parse(&self, parser: &Parser, tokenizer: &mut Tokenizer, token: Token) -> Expression {
         if token.check(TokenType::OpenParen) {
-            let expr = match parser.parse(tokenizer) {
+            let expr = match parser.parse(token.get_type().into(), tokenizer) {
                 Some(e) => e,
                 None => throw(Error::CouldNotParse (token.get_value())),
             };

@@ -103,6 +103,28 @@ pub enum Expression {
 }
 
 
+/// Converts a token type into a precedence value.
+impl From<TokenType> for u8 {
+    fn from(t: TokenType) -> u8 {
+        match t {
+            TokenType::Assignment => 1,
+            TokenType::While => 1,
+            TokenType::Equal => 2,
+            TokenType::Greater => 2,
+            TokenType::GreaterEqual => 2,
+            TokenType::Less => 2,
+            TokenType::LessEqual => 2,
+            TokenType::Plus => 3,
+            TokenType::Minus => 3,
+            TokenType::Multiply => 4,
+            TokenType::Divide => 4,
+            TokenType::OpenParen => 6,
+            _ => 0,
+        }
+    }
+}
+
+
 /// Creates an abstraction over parsing behaviors.
 pub struct Parser {
     prefix_parselets: HashMap<TokenType, Box<dyn PrefixParselet>>,
@@ -144,8 +166,18 @@ impl Parser {
         }
     }
 
+    /// Gets the precedence of the given token.
+    fn get_precedence(&self, tokenizer: &mut Tokenizer) -> u8 {
+        let token = match tokenizer.peek() {
+            Some(t) => t,
+            None => return 0,
+        };
+
+        token.get_type().into()
+    }
+
     /// Parses the token stream and returns an expression, if possible.
-    pub fn parse(&self, tokenizer: &mut Tokenizer) -> Option<Expression> {
+    pub fn parse(&self, precedence: u8, tokenizer: &mut Tokenizer) -> Option<Expression> {
         // Get the next token from the token stream.
         let token = match tokenizer.next() {
             Some(t) => t,
@@ -158,30 +190,37 @@ impl Parser {
             None => return None,
         };
 
-        let left = parselet.parse(self, tokenizer, token);
+        let mut left: Expression = parselet.parse(self, tokenizer, token);
 
-        let token = match tokenizer.peek() {
-            Some(t) => t,
-            None => return Some(left),
-        };
+        while precedence < self.get_precedence(tokenizer) {
+            let token = match tokenizer.peek() {
+                Some(t) => t,
+                None => break,
+            };
+    
+            // Get the proper infix parselet from the type of the given token,
+            // or return the current expression.
+            let parselet: &Box<dyn InfixParselet> = match self.infix_parselets.get(&token.get_type()) {
+                Some(p) => p,
+                None => break,
+            };
+    
+            tokenizer.next();
+    
+            left = parselet.parse(self, tokenizer, left, token);
+        }
 
-        // Get the proper infix parselet from the type of the given token,
-        // or return the current expression.
-        let parselet: &Box<dyn InfixParselet> = match self.infix_parselets.get(&token.get_type()) {
-            Some(p) => p,
-            None => return Some(left),
-        };
+        dbg!(&left);
+        dbg!(&precedence);
 
-        tokenizer.next();
-
-        Some(parselet.parse(self, tokenizer, left, token))
+        Some(left)
     }
 
     /// Parses the program into a list of expressions.
     pub fn parse_all(&self, tokenizer: &mut Tokenizer) -> Vec<Expression> {
         let mut expressions = Vec::new();
 
-        while let Some(e) = self.parse(tokenizer) {
+        while let Some(e) = self.parse(0, tokenizer) {
             expressions.push(e);
         }
 

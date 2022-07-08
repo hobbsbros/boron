@@ -21,7 +21,7 @@ pub struct UnaryOpParselet;
 impl PrefixParselet for UnaryOpParselet {
     /// Parses a unary operation into an expression.
     fn parse(&self, parser: &Parser, tokenizer: &mut Tokenizer, token: Token) -> Expression {
-        let expr = match parser.parse(tokenizer) {
+        let expr = match parser.parse(token.get_type().into(), tokenizer) {
             Some(e) => e,
             None => throw(Error::CouldNotParse (token.get_value())),
         };

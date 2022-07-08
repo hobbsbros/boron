@@ -22,7 +22,7 @@ pub struct BinOpParselet;
 impl InfixParselet for BinOpParselet {
     /// Parses a binary operation into an expression.
     fn parse(&self, parser: &Parser, tokenizer: &mut Tokenizer, left: Expression, token: Token) -> Expression {
-        let right = match parser.parse(tokenizer) {
+        let right = match parser.parse(token.get_type().into(), tokenizer) {
             Some(r) => r,
             None => throw(Error::CouldNotParse (token.get_value())),
         };
