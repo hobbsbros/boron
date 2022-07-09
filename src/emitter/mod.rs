@@ -203,6 +203,26 @@ impl Emitter {
                 emitted.push_str("}");
                 emitted.to_owned()
             },
+            Expression::TernaryIfElse {
+                condition: c,
+                body_true: t,
+                body_false: f,
+            } => {
+                let mut emitted = String::new();
+                // Emit the condition
+                emitted.push_str(&self.emit(&*c));
+                // Emit the ternary if
+                emitted.push_str(" ? ");
+                // Emit the first expression
+                emitted.push_str(&self.emit(&*t));
+                // Emit the ternary else
+                emitted.push_str(" : ");
+                // Emit the second expression
+                emitted.push_str(&self.emit(&*f));
+                
+                emitted.to_owned()
+            },
+            
         };
 
         value.to_owned()

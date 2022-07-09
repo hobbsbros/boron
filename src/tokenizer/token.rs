@@ -27,6 +27,8 @@ pub enum TokenType {
     While,
     If,
     Else,
+    TernaryIf,
+    TernaryElse,
     Unknown,
 }
 

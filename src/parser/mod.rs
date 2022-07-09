@@ -14,6 +14,7 @@ pub mod paren_parselet;
 pub mod while_parselet;
 pub mod unaryop_parselet;
 pub mod ifelse_parselet;
+pub mod ternary_parselet;
 
 
 use std::collections::HashMap;
@@ -31,6 +32,7 @@ use paren_parselet::ParenParselet;
 use while_parselet::WhileParselet;
 use unaryop_parselet::UnaryOpParselet;
 use ifelse_parselet::IfElseParselet;
+use ternary_parselet::TernaryParselet;
 
 pub use crate::tokenizer::{
     Token,
@@ -100,6 +102,12 @@ pub enum Expression {
         body_true: Vec<Expression>,
         body_false: Vec<Expression>,
     },
+    // Ternary if/else statement
+    TernaryIfElse {
+        condition: Box<Expression>,
+        body_true: Box<Expression>,
+        body_false: Box<Expression>,
+    },
 }
 
 
@@ -109,16 +117,18 @@ impl From<TokenType> for u8 {
         match t {
             TokenType::Assignment => 1,
             TokenType::While => 1,
-            TokenType::Equal => 2,
-            TokenType::Greater => 2,
-            TokenType::GreaterEqual => 2,
-            TokenType::Less => 2,
-            TokenType::LessEqual => 2,
+            TokenType::TernaryIf => 2,
+            TokenType::TernaryElse => 2,
             TokenType::Plus => 3,
             TokenType::Minus => 3,
             TokenType::Multiply => 4,
             TokenType::Divide => 4,
             TokenType::OpenParen => 6,
+            TokenType::Equal => 7,
+            TokenType::Greater => 7,
+            TokenType::GreaterEqual => 7,
+            TokenType::Less => 7,
+            TokenType::LessEqual => 7,
             _ => 0,
         }
     }
@@ -159,6 +169,7 @@ impl Parser {
         infix_parselets.insert(TokenType::GreaterEqual, Box::new(BinOpParselet {}));
         infix_parselets.insert(TokenType::LessEqual, Box::new(BinOpParselet {}));
         infix_parselets.insert(TokenType::Equal, Box::new(BinOpParselet {}));
+        infix_parselets.insert(TokenType::TernaryIf, Box::new(TernaryParselet {}));
 
         Self {
             prefix_parselets,
@@ -183,6 +194,11 @@ impl Parser {
             Some(t) => t,
             None => return None,
         };
+
+        dbg!(&token);
+        dbg!(precedence);
+
+        println!("\n");
 
         // Get the proper prefix parselet from the type of the given token.
         let parselet: &Box<dyn PrefixParselet> = match self.prefix_parselets.get(&token.get_type()) {

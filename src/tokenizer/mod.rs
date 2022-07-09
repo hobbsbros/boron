@@ -102,6 +102,10 @@ impl Tokenizer {
         let token = match character {
             // EOF
             '\0' => return None,
+            // Ternary if
+            '?' => Token::new(character.to_string(), TokenType::TernaryIf),
+            // Ternary else
+            '|' => Token::new(character.to_string(), TokenType::TernaryElse),
             // Open parenthesis
             '(' => Token::new(character.to_string(), TokenType::OpenParen),
             // Closing parenthesis
