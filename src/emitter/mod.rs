@@ -111,12 +111,12 @@ impl Emitter {
             Expression::UnaryOp {
                 op: o,
                 expr: e,
-            } => format!("{}{}", self.match_op(*o), self.emit(&*e)),
+            } => format!("({}{})", self.match_op(*o), self.emit(&*e)),
             Expression::BinOp {
                 left: l,
                 op: o,
                 right: r,
-            } => format!("{} {} {}", self.emit(&*l), self.match_op(*o), self.emit(&*r)),
+            } => format!("({} {} {})", self.emit(&*l), self.match_op(*o), self.emit(&*r)),
             Expression::Declaration {
                 datatype: d,
                 identifier: i,
@@ -156,10 +156,10 @@ impl Emitter {
                 condition: c,
                 body: b,
             } => {
-                let mut emitted = "while (".to_string();
+                let mut emitted = "while ".to_string();
                 // Emit the condition
                 emitted.push_str(&self.emit(&*c));
-                emitted.push_str(") {\n");
+                emitted.push_str(" {\n");
                 // Emit each expression in the while loop
                 for expr in b.iter() {
                     emitted.push_str(&format!("{};\n", self.emit(expr)));
@@ -171,10 +171,10 @@ impl Emitter {
                 condition: c,
                 body: b,
             } => {
-                let mut emitted = "if (".to_string();
+                let mut emitted = "if ".to_string();
                 // Emit the condition
                 emitted.push_str(&self.emit(&*c));
-                emitted.push_str(") {\n");
+                emitted.push_str(" {\n");
                 // Emit each expression in the if statement
                 for expr in b.iter() {
                     emitted.push_str(&format!("{};\n", self.emit(expr)));
@@ -187,10 +187,10 @@ impl Emitter {
                 body_true: t,
                 body_false: f,
             } => {
-                let mut emitted = "if (".to_string();
+                let mut emitted = "if ".to_string();
                 // Emit the condition
                 emitted.push_str(&self.emit(&*c));
-                emitted.push_str(") {\n");
+                emitted.push_str(" {\n");
                 // Emit each expression in the if statement
                 for expr in t.iter() {
                     emitted.push_str(&format!("{};\n", self.emit(expr)));
@@ -264,10 +264,23 @@ impl Emitter {
 
         for expression in expressions {
             let statement = self.emit(&expression);
-            self.writescln(&statement);
+            match expression {
+                Expression::While {
+                    condition: _,
+                    body: _,
+                } | Expression::If {
+                    condition: _,
+                    body: _,
+                } | Expression::IfElse {
+                    condition: _,
+                    body_true: _,
+                    body_false: _,
+                } => self.writeln(&statement),
+                _ => self.writescln(&statement),
+            };
         }
 
-        self.writeln("}");
+        self.writeln("return 0;\n}");
 
         self.code.to_owned()
     }

@@ -210,9 +210,6 @@ impl Parser {
             left = parselet.parse(self, tokenizer, left, token);
         }
 
-        dbg!(&left);
-        dbg!(&precedence);
-
         Some(left)
     }
 

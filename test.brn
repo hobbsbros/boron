@@ -3,7 +3,7 @@
 # Compute the first 10 Fibonacci numbers
 
 
-int x: 1
+int x: 1.
 int y: 0
 int z: 0
 
