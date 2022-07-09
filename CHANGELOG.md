@@ -4,7 +4,7 @@
 
 Added support for ternary operator `? |`.
 
-Fixed variable scoping.
+~~Fixed variable scoping.~~ (bumped to v0.14.0 release)
 
 Expanded changelog back to version 0.6.0.
 
