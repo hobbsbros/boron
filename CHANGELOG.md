@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.13.2
+
+Fixed an issue causing ternary expressions not to parse properly.
+
 ## Version 0.13.1
 
 Fixed an issue causing debug information to be printed to stdout.
