@@ -3,6 +3,8 @@
 # Compute the first 10 Fibonacci numbers
 
 
+int w: a + (b ? !c | -d)
+
 int x: (3 < 2) ? 0 | 1
 int y: 0
 int z: 0

@@ -117,18 +117,20 @@ impl From<TokenType> for u8 {
         match t {
             TokenType::Assignment => 1,
             TokenType::While => 1,
-            TokenType::TernaryIf => 2,
-            TokenType::TernaryElse => 2,
+            //TokenType::TernaryIf => 2,
+            //TokenType::TernaryElse => 2,
             TokenType::Plus => 3,
             TokenType::Minus => 3,
             TokenType::Multiply => 4,
             TokenType::Divide => 4,
-            TokenType::OpenParen => 6,
+            TokenType::OpenParen => 5,
             TokenType::Equal => 7,
             TokenType::Greater => 7,
             TokenType::GreaterEqual => 7,
             TokenType::Less => 7,
             TokenType::LessEqual => 7,
+            TokenType::TernaryIf => 8,
+            TokenType::TernaryElse => 8,
             _ => 0,
         }
     }

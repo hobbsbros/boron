@@ -111,7 +111,7 @@ impl Emitter {
             Expression::UnaryOp {
                 op: o,
                 expr: e,
-            } => format!("({}{})", self.match_op(*o), self.emit(&*e)),
+            } => format!("{}{}", self.match_op(*o), self.emit(&*e)),
             Expression::BinOp {
                 left: l,
                 op: o,
@@ -208,7 +208,7 @@ impl Emitter {
                 body_true: t,
                 body_false: f,
             } => {
-                let mut emitted = String::new();
+                let mut emitted = "(".to_string();
                 // Emit the condition
                 emitted.push_str(&self.emit(&*c));
                 // Emit the ternary if
@@ -219,6 +219,8 @@ impl Emitter {
                 emitted.push_str(" : ");
                 // Emit the second expression
                 emitted.push_str(&self.emit(&*f));
+                // Emit a closing parenthesis
+                emitted.push(')');
                 
                 emitted.to_owned()
             },
