@@ -11,10 +11,7 @@
 
 
 use std::{
-    fs::{
-        self,
-        OpenOptions,
-    },
+    fs::{read_to_string, OpenOptions},
     env,
     io::Write,
 };
@@ -25,22 +22,10 @@ pub mod emitter;
 pub mod version;
 pub mod error;
 
-use tokenizer::{
-    Tokenizer,
-};
-
-use parser::{
-    Parser,
-};
-
-use emitter::{
-    Emitter,
-};
-
-use error::{
-    throw,
-    Error,
-};
+use tokenizer::Tokenizer;
+use parser::Parser;
+use emitter::Emitter;
+use error::{Error, throw};
 
 
 fn main() {
@@ -50,7 +35,7 @@ fn main() {
         None => throw(Error::NoFileProvided),
     };
 
-    let code = match fs::read_to_string(&filename) {
+    let code = match read_to_string(&filename) {
         Ok(c) => c,
         Err(_) => throw(Error::CouldNotReadFile (filename.to_owned())),
     };
