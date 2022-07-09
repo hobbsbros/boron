@@ -3,6 +3,7 @@ name = "boron-lang"
 description = "A simple, efficient, compiled programming language."
 repository = "https://github.com/hobbsbros/boron.git"
 authors = ["Joseph Hobbs"]
+readme = "README.md"
 license = "MIT"
 version = "0.13.2"
 edition = "2021"
