@@ -195,11 +195,6 @@ impl Parser {
             None => return None,
         };
 
-        dbg!(&token);
-        dbg!(precedence);
-
-        println!("\n");
-
         // Get the proper prefix parselet from the type of the given token.
         let parselet: &Box<dyn PrefixParselet> = match self.prefix_parselets.get(&token.get_type()) {
             Some(p) => p,

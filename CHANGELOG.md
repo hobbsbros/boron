@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.13.1
+
+Fixed an issue causing debug information to be printed to stdout.
+
 ## Version 0.13.0
 
 Added support for ternary operator `? |`.
