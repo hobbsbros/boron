@@ -23,6 +23,7 @@ pub enum Error {
     ExpectedOpenParen (String),
     ExpectedCloseParen (String),
     ExpectedOpenBrace (String),
+    UndeclaredVariable (String),
 }
 
 
@@ -76,6 +77,9 @@ pub fn throw(e: Error) -> ! {
         },
         Error::ExpectedOpenBrace (s) => {
             println!("{}: Expected open curly brace '{{', got token {}", "Error".bold().red(), s);
+        },
+        Error::UndeclaredVariable (s) => {
+            println!("{}: Found undeclared variable {}", "Error".bold().red(), s);
         },
     };
     

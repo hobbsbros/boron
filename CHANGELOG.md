@@ -12,7 +12,7 @@ Fixed an issue causing debug information to be printed to stdout.
 
 Added support for ternary operator `? |`.
 
-~~Fixed variable scoping.~~ (bumped to v0.14.0 release)
+~~Fixed variable scoping.~~ (bumped to a later release)
 
 Expanded changelog back to version 0.6.0.
 

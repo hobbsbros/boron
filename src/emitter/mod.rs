@@ -76,8 +76,13 @@ impl Emitter {
         for arg in args {
             if let Expression::Identifier (id) = arg {
                 emitted.push_str("printf(");
-                // TODO: don't use unwrap here.
-                match self.variables.get(&id).unwrap().as_str() {
+
+                let var = match self.variables.get(&id) {
+                    Some(v) => v,
+                    None => throw(Error::UndeclaredVariable (id)),
+                };
+
+                match var.as_str() {
                     "int" => {
                         emitted.push_str("\"%d\\n\", ");
                         emitted.push_str(&id);
@@ -261,7 +266,7 @@ impl Emitter {
         // Get current time
         let now = Local::now();
         let time: String = format!(
-            "// Created on {:02}/{:02}/{:02} at {:02}:{:02}:{:02} local time",
+            "// Created on {:04}/{:02}/{:02} at {:02}:{:02}:{:02} local time",
             now.year(),
             now.month(),
             now.day(),
