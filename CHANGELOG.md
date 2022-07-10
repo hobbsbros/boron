@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.14.1
+
+Fixed a bug preventing the tokenizer from working on Windows systems due to `CR` characters.
+
+## Version 0.14.0
+
+Modified the emitter to emit dates in 4-digit year format (`2022` vs `22`).
+
 ## Version 0.13.2
 
 Fixed an issue causing ternary expressions not to parse properly.
