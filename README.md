@@ -16,7 +16,7 @@ The Boron compiler is written fully in the Rust programming language and can be 
 
 ## From Crates.io
 
-Boron can be installed from the (crates.io)[https://crates.io] registry.
+Boron can be installed from the [crates.io](https://crates.io) registry.
 
 ```
 $ cargo install boron-lang
