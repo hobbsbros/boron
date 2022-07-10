@@ -76,7 +76,7 @@ pub fn throw(e: Error) -> ! {
         },
         Error::ExpectedOpenBrace (s) => {
             println!("{}: Expected open curly brace '{{', got token {}", "Error".bold().red(), s);
-        }
+        },
     };
     
     println!("Compiler exiting");

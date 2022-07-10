@@ -22,11 +22,13 @@ use crate::error::{
 };
 
 
+/// Provides an abstraction over the Boron-to-C emitter.
 pub struct Emitter {
     variables: HashMap<String, String>,
     code: String,
 }
 
+/// Provides an interface for the Boron-to-C emitter.
 impl Emitter {
     /// Constructs a new emitter.
     pub fn new() -> Self {
