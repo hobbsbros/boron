@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.15.0
+
+Fixed variable scoping (bumped from v0.13.0 release).
+
 ## Version 0.14.1
 
 Fixed a bug preventing the tokenizer from working on Windows systems due to `CR` characters.
@@ -50,4 +54,4 @@ Implemented proper error handling.
 
 ## Version 0.6.0
 
-Original release of compiler.
+Original release of compiler; overhauled previous code and implemented tokenizer, parser, and emitter.

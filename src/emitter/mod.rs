@@ -22,10 +22,99 @@ use crate::error::{
 };
 
 
+/// Holds a list of variable scopes.
+#[derive(Debug)]
+pub struct Environment {
+    scopes: Vec<Scope>,
+}
+
+/// Provides an interface for the environment.
+impl Environment {
+    /// Constructs a new environment.
+    pub fn new() -> Self {
+        Self {
+            scopes: Vec::new(),
+        }
+    }
+
+    /// Adds a new scope to the environment and returns the scope's ID.
+    pub fn add(&mut self, parent: Option<usize>) -> usize {
+        let new = Scope {
+            variables: HashMap::new(),
+            id: self.scopes.len(),
+            parent,
+        };
+        let id = new.get_id();
+        self.scopes.push(new);
+        id
+    }
+
+    /// Registers a variable within the given scope.
+    pub fn register(&mut self, id: usize, varname: String, vartype: String) {
+        self.scopes[id].register(varname, vartype);
+    }
+
+    /// Looks up a variable in the given scope.
+    pub fn lookup(&self, id: usize, varname: &String) -> String {
+        match self.scopes[id].get(varname) {
+            Some(s) => s.to_string(),
+            None => match self.scopes[id].get_parent() {
+                Some(p) => self.lookup(p, varname),
+                None => throw(Error::UndeclaredVariable (varname.to_string())),
+            }
+        }
+    }
+}
+
+
+/// Abstracts over variable scopes.
+#[derive(Clone, Debug)]
+pub struct Scope {
+    variables: HashMap<String, String>,
+    id: usize,
+    parent: Option<usize>,
+}
+
+/// Provides an interface for interacting with scopes.
+impl Scope {
+    /// Gets the ID of the given scope.
+    pub fn get_id(&self) -> usize {
+        self.id
+    }
+
+    /// Gets the ID of the given scope's parent.
+    pub fn get_parent(&self) -> Option<usize> {
+        self.parent
+    }
+
+    /// Registers a variable within the scope.
+    pub fn register(&mut self, varname: String, vartype: String) {
+        self.variables.insert(varname, vartype);
+    }
+
+    /// Looks up a variable in the given scope.
+    pub fn get(&self, varname: &String) -> Option<&String> {
+        self.variables.get(varname)
+    }
+}
+
+#[test]
+fn scoping() {
+    // Create a new environment.
+    let mut global = Environment::new();
+    let s1 = global.add(None);
+    let s2 = global.add(Some(s1));
+    let s3 = global.add(Some(s2));
+
+    global.get(s1).register("x".to_string(), "int".to_string());
+    assert_eq!(global.get(s3).lookup(&global, "x".to_string()), "int".to_string());
+}
+
+
 /// Provides an abstraction over the Boron-to-C emitter.
 pub struct Emitter {
-    variables: HashMap<String, String>,
     code: String,
+    environment: Environment,
 }
 
 /// Provides an interface for the Boron-to-C emitter.
@@ -33,8 +122,8 @@ impl Emitter {
     /// Constructs a new emitter.
     pub fn new() -> Self {
         Self {
-            variables: HashMap::new(),
             code: String::new(),
+            environment: Environment::new(),
         }
     }
 
@@ -70,17 +159,14 @@ impl Emitter {
     }
 
     /// Emits a `printf` expression.
-    fn emit_printf(&self, args: Vec<Expression>) -> String {
+    fn emit_printf(&self, args: Vec<Expression>, scope: usize) -> String {
         // "print" is a special case due to idiosyncracies of C & Boron
         let mut emitted = String::new();
         for arg in args {
             if let Expression::Identifier (id) = arg {
                 emitted.push_str("printf(");
 
-                let var = match self.variables.get(&id) {
-                    Some(v) => v,
-                    None => throw(Error::UndeclaredVariable (id)),
-                };
+                let var = self.environment.lookup(scope, &id);
 
                 match var.as_str() {
                     "int" => {
@@ -97,17 +183,42 @@ impl Emitter {
                     }
                     _ => throw(Error::CouldNotEmit (id.to_string())),
                 }
-                emitted.push_str(");\n\t");
+                emitted.push_str(");\n");
             }
         }
-        emitted.pop();
         emitted.pop();
         emitted.pop();
         emitted
     }
 
+    /// Emits a block of code.
+    fn emit_block(&mut self, block: Vec<Expression>, parent: Option<usize>) -> String {
+        let scope = self.environment.add(parent);
+        let mut code = String::new();
+
+        for expression in block {
+            code.push_str(&self.emit(&expression, scope));
+            match expression {
+                Expression::While {
+                    condition: _,
+                    body: _,
+                } | Expression::If {
+                    condition: _,
+                    body: _,
+                } | Expression::IfElse {
+                    condition: _,
+                    body_true: _,
+                    body_false: _,
+                } => code.push_str("\n"),
+                _ => code.push_str(";\n"),
+            };
+        }
+
+        code.to_owned()
+    }
+
     /// Emits an expression.
-    fn emit(&self, expr: &Expression) -> String {
+    fn emit(&mut self, expr: &Expression, scope: usize) -> String {
         // Emit the given expression as a string
         let value: String = match expr {
             Expression::Int (i) => format!("{}", i),
@@ -118,12 +229,12 @@ impl Emitter {
             Expression::UnaryOp {
                 op: o,
                 expr: e,
-            } => format!("{}{}", self.match_op(*o), self.emit(&*e)),
+            } => format!("{}{}", self.match_op(*o), self.emit(&*e, scope)),
             Expression::BinOp {
                 left: l,
                 op: o,
                 right: r,
-            } => format!("({} {} {})", self.emit(&*l), self.match_op(*o), self.emit(&*r)),
+            } => format!("({} {} {})", self.emit(&*l, scope), self.match_op(*o), self.emit(&*r, scope)),
             Expression::Declaration {
                 datatype: d,
                 identifier: i,
@@ -132,24 +243,25 @@ impl Emitter {
                 datatype: d,
                 identifier: i,
                 value: e,
-            } => format!("{} {} = {}", self.match_type(d.to_string()), i, self.emit(&*e)),
+            } => {
+                self.environment.register(scope, i.clone(), d.clone());
+                format!("{} {} = {}", self.match_type(d.to_string()), i, self.emit(&*e, scope))
+            },
             Expression::Reassignment {
                 identifier: i,
                 value: e,
-            } => format!("{} = {}", i, self.emit(&*e)),
+            } => format!("{} = {}", i, self.emit(&*e, scope)),
             Expression::FnCall {
                 name: n,
                 args: a,
             } => {
                 match n.as_str() {
-                    "print" => {
-                        self.emit_printf(a.clone())
-                    },
+                    "print" => self.emit_printf(a.clone(), scope),
                     _ => {
                         let mut emitted = format!("{}(", n);
                         // Emit each argument recursively
                         for (idx, arg) in a.iter().enumerate() {
-                            emitted.push_str(&format!("{}", self.emit(arg)));
+                            emitted.push_str(&format!("{}", self.emit(arg, scope)));
                             if idx < a.len() - 1 {
                                 emitted.push('\n');
                             }
@@ -165,12 +277,11 @@ impl Emitter {
             } => {
                 let mut emitted = "while ".to_string();
                 // Emit the condition
-                emitted.push_str(&self.emit(&*c));
+                emitted.push_str(&self.emit(&*c, scope));
                 emitted.push_str(" {\n");
                 // Emit each expression in the while loop
-                for expr in b.iter() {
-                    emitted.push_str(&format!("{};\n", self.emit(expr)));
-                }
+                let block = self.emit_block(b.to_vec(), Some(scope));
+                emitted.push_str(&block);
                 emitted.push_str("}");
                 emitted.to_owned()
             },
@@ -180,12 +291,11 @@ impl Emitter {
             } => {
                 let mut emitted = "if ".to_string();
                 // Emit the condition
-                emitted.push_str(&self.emit(&*c));
+                emitted.push_str(&self.emit(&*c, scope));
                 emitted.push_str(" {\n");
                 // Emit each expression in the if statement
-                for expr in b.iter() {
-                    emitted.push_str(&format!("{};\n", self.emit(expr)));
-                }
+                let block = self.emit_block(b.to_vec(), Some(scope));
+                emitted.push_str(&block);
                 emitted.push_str("}");
                 emitted.to_owned()
             },
@@ -196,17 +306,15 @@ impl Emitter {
             } => {
                 let mut emitted = "if ".to_string();
                 // Emit the condition
-                emitted.push_str(&self.emit(&*c));
+                emitted.push_str(&self.emit(&*c, scope));
                 emitted.push_str(" {\n");
                 // Emit each expression in the if statement
-                for expr in t.iter() {
-                    emitted.push_str(&format!("{};\n", self.emit(expr)));
-                }
+                let block_true = self.emit_block(t.to_vec(), Some(scope));
+                emitted.push_str(&block_true);
                 emitted.push_str("} else {\n");
                 // Emit each expression in the else statement
-                for expr in f.iter() {
-                    emitted.push_str(&format!("{};\n", self.emit(expr)));
-                }
+                let block_false = self.emit_block(f.to_vec(), Some(scope));
+                emitted.push_str(&block_false);
                 emitted.push_str("}");
                 emitted.to_owned()
             },
@@ -217,15 +325,15 @@ impl Emitter {
             } => {
                 let mut emitted = "(".to_string();
                 // Emit the condition
-                emitted.push_str(&self.emit(&*c));
+                emitted.push_str(&self.emit(&*c, scope));
                 // Emit the ternary if
                 emitted.push_str(" ? ");
                 // Emit the first expression
-                emitted.push_str(&self.emit(&*t));
+                emitted.push_str(&self.emit(&*t, scope));
                 // Emit the ternary else
                 emitted.push_str(" : ");
                 // Emit the second expression
-                emitted.push_str(&self.emit(&*f));
+                emitted.push_str(&self.emit(&*f, scope));
                 // Emit a closing parenthesis
                 emitted.push(')');
                 
@@ -237,13 +345,6 @@ impl Emitter {
         value.to_owned()
     }
 
-    /// Emits a section of code and inserts a semicolon and a new line by concatenating to the C program.
-    fn writescln(&mut self, s: &str) {
-        self.code.push_str(s);
-        self.code.push(';');
-        self.code.push('\n');
-    }
-
     /// Emits a section of code and inserts a new line by concatenating to the C program.
     fn writeln(&mut self, s: &str) {
         self.code.push_str(s);
@@ -252,20 +353,9 @@ impl Emitter {
 
     /// Compiles a list of expressions into a string of C code.
     pub fn compile(&mut self, expressions: Vec<Expression>) -> String {
-        // Create a list of variables
-        for expression in &expressions {
-            if let Expression::Assignment {
-                datatype: d,
-                identifier: i,
-                value: _,
-            } = expression {
-                self.variables.insert(i.clone(), d.clone());
-            }
-        }
-
         // Get current time
         let now = Local::now();
-        let time: String = format!(
+        let datetime: String = format!(
             "// Created on {:04}/{:02}/{:02} at {:02}:{:02}:{:02} local time",
             now.year(),
             now.month(),
@@ -281,8 +371,7 @@ impl Emitter {
         // Emit file metadata
         self.writeln("// Autogenerated by the Boron compiler");
         self.writeln(&version);
-        self.writeln(&time);
-        self.writeln("");
+        self.writeln(&datetime);
         self.writeln("");
 
         // Emit header information
@@ -291,23 +380,8 @@ impl Emitter {
         self.writeln("");
         self.writeln("int main(void) {");
 
-        for expression in expressions {
-            let statement = self.emit(&expression);
-            match expression {
-                Expression::While {
-                    condition: _,
-                    body: _,
-                } | Expression::If {
-                    condition: _,
-                    body: _,
-                } | Expression::IfElse {
-                    condition: _,
-                    body_true: _,
-                    body_false: _,
-                } => self.writeln(&statement),
-                _ => self.writescln(&statement),
-            };
-        }
+        let code = self.emit_block(expressions, None);
+        self.writeln(&code);
 
         self.writeln("return 0;\n}");
 

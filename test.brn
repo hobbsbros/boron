@@ -10,9 +10,6 @@ int z: 0
 int count: 0
 
 while count <= 10 {
-    int c: 0
-    print(c)
-
     z: x + y
     print(z)
     x: y
