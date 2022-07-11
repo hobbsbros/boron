@@ -15,6 +15,7 @@ pub mod while_parselet;
 pub mod unaryop_parselet;
 pub mod ifelse_parselet;
 pub mod ternary_parselet;
+pub mod struct_parselet;
 
 
 use std::collections::HashMap;
@@ -33,6 +34,7 @@ use while_parselet::WhileParselet;
 use unaryop_parselet::UnaryOpParselet;
 use ifelse_parselet::IfElseParselet;
 use ternary_parselet::TernaryParselet;
+use struct_parselet::StructParselet;
 
 pub use crate::tokenizer::{
     Token,
@@ -69,6 +71,17 @@ pub enum Expression {
     Declaration {
         datatype: String,
         identifier: String,
+    },
+    // Struct declaration
+    Struct {
+        identifier: String,
+        variables: HashMap<String, String>,
+    },
+    // Struct initialization
+    StructInit {
+        identifier: String,
+        name: String,
+        variables: Vec<(String, Expression)>,
     },
     // Variable assignment
     Assignment {
@@ -117,8 +130,6 @@ impl From<TokenType> for u8 {
         match t {
             TokenType::Assignment => 1,
             TokenType::While => 1,
-            //TokenType::TernaryIf => 2,
-            //TokenType::TernaryElse => 2,
             TokenType::Plus => 3,
             TokenType::Minus => 3,
             TokenType::Multiply => 4,
@@ -160,6 +171,7 @@ impl Parser {
         prefix_parselets.insert(TokenType::OpenParen, Box::new(ParenParselet {}));
         prefix_parselets.insert(TokenType::Minus, Box::new(UnaryOpParselet {}));
         prefix_parselets.insert(TokenType::Not, Box::new(UnaryOpParselet {}));
+        prefix_parselets.insert(TokenType::Struct, Box::new(StructParselet {}));
         infix_parselets.insert(TokenType::Assignment, Box::new(AssignmentParselet {}));
         infix_parselets.insert(TokenType::OpenParen, Box::new(OpenParenParselet {}));
         infix_parselets.insert(TokenType::Plus, Box::new(BinOpParselet {}));

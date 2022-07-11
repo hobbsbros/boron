@@ -186,6 +186,7 @@ impl Tokenizer {
                     "int" => Token::new(sofar, TokenType::Type),
                     "flt" => Token::new(sofar, TokenType::Type),
                     "bln" => Token::new(sofar, TokenType::Type),
+                    "struct" => Token::new(sofar, TokenType::Struct),
                     "true" => Token::new(sofar, TokenType::Bool),
                     "false" => Token::new(sofar, TokenType::Bool),
                     "while" => Token::new(sofar, TokenType::While),

@@ -46,7 +46,7 @@ pub fn throw(e: Error) -> ! {
             println!("{}: Could not write to output file {}", "Error".bold().red(), s);
         },
         Error::CouldNotEmit (s) => {
-            println!("{}: Could not emit code near {}", "Error".bold().red(), s);
+            println!("{}: Could not emit code near token {}", "Error".bold().red(), s);
         },
         Error::CouldNotParse (s) => {
             println!("{}: Could not parse code near token {}", "Error".bold().red(), s);

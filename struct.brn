@@ -1,0 +1,13 @@
+# Testing the behavior of Boron structures
+
+struct Person {
+    int age
+    flt height
+}
+
+struct Person john {
+    age 32 + 13
+    height 6.0
+}
+
+print(john.age)

@@ -24,6 +24,7 @@ pub enum TokenType {
     Equal,
     Not,
     Type,
+    Struct,
     While,
     If,
     Else,

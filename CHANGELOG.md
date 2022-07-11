@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.16.0
+
+Added support for C-like struct definition and initialization.
+
 ## Version 0.15.1
 
 Fixed a bug preventing compilation of if & while statements.

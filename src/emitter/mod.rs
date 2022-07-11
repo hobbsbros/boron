@@ -41,6 +41,7 @@ impl Environment {
     pub fn add(&mut self, parent: Option<usize>) -> usize {
         let new = Scope {
             variables: HashMap::new(),
+            structs: HashMap::new(),
             id: self.scopes.len(),
             parent,
         };
@@ -50,16 +51,32 @@ impl Environment {
     }
 
     /// Registers a variable within the given scope.
-    pub fn register(&mut self, id: usize, varname: String, vartype: String) {
-        self.scopes[id].register(varname, vartype);
+    pub fn register(&mut self, id: usize, varname: String, variable: Variable) {
+        self.scopes[id].register(varname, variable);
+    }
+
+    /// Registers a structure within the given scope.
+    pub fn register_struct(&mut self, id: usize, varname: String, structure: HashMap<String, String>) {
+        self.scopes[id].register_struct(varname, structure);
     }
 
     /// Looks up a variable in the given scope.
-    pub fn lookup(&self, id: usize, varname: &String) -> String {
+    pub fn lookup(&self, id: usize, varname: &String) -> Variable {
         match self.scopes[id].get(varname) {
-            Some(s) => s.to_string(),
+            Some(s) => s.to_owned(),
             None => match self.scopes[id].get_parent() {
                 Some(p) => self.lookup(p, varname),
+                None => throw(Error::UndeclaredVariable (varname.to_string())),
+            }
+        }
+    }
+
+    /// Looks up a structure in the given scope.
+    pub fn lookup_struct(&self, id: usize, varname: &String) -> HashMap<String, String> {
+        match self.scopes[id].get_struct(varname) {
+            Some(s) => s.to_owned(),
+            None => match self.scopes[id].get_parent() {
+                Some(p) => self.lookup_struct(p, varname),
                 None => throw(Error::UndeclaredVariable (varname.to_string())),
             }
         }
@@ -67,10 +84,23 @@ impl Environment {
 }
 
 
+/// Represents the types of variables to be stored in a scope.
+#[derive(Clone, Debug)]
+pub enum Variable {
+    // Holds the name of the integer.
+    Int,
+    // Holds the name of the floating point.
+    Float,
+    // Holds the name of the Boolean.
+    Bool,
+}
+
+
 /// Abstracts over variable scopes.
 #[derive(Clone, Debug)]
 pub struct Scope {
-    variables: HashMap<String, String>,
+    variables: HashMap<String, Variable>,
+    structs: HashMap<String, HashMap<String, String>>,
     id: usize,
     parent: Option<usize>,
 }
@@ -88,26 +118,24 @@ impl Scope {
     }
 
     /// Registers a variable within the scope.
-    pub fn register(&mut self, varname: String, vartype: String) {
-        self.variables.insert(varname, vartype);
+    pub fn register(&mut self, varname: String, variable: Variable) {
+        self.variables.insert(varname, variable);
+    }
+
+    /// Registers a structure within the scope.
+    pub fn register_struct(&mut self, varname: String, structure: HashMap<String, String>) {
+        self.structs.insert(varname, structure);
     }
 
     /// Looks up a variable in the given scope.
-    pub fn get(&self, varname: &String) -> Option<&String> {
+    pub fn get(&self, varname: &String) -> Option<&Variable> {
         self.variables.get(varname)
     }
-}
 
-#[test]
-fn scoping() {
-    // Create a new environment.
-    let mut global = Environment::new();
-    let s1 = global.add(None);
-    let s2 = global.add(Some(s1));
-    let s3 = global.add(Some(s2));
-
-    global.get(s1).register("x".to_string(), "int".to_string());
-    assert_eq!(global.get(s3).lookup(&global, "x".to_string()), "int".to_string());
+    /// Looks up a structure in the given scope.
+    pub fn get_struct(&self, varname: &String) -> Option<&HashMap<String, String>> {
+        self.structs.get(varname)
+    }
 }
 
 
@@ -164,26 +192,25 @@ impl Emitter {
         let mut emitted = String::new();
         for arg in args {
             if let Expression::Identifier (id) = arg {
-                emitted.push_str("printf(");
-
                 let var = self.environment.lookup(scope, &id);
 
-                match var.as_str() {
-                    "int" => {
-                        emitted.push_str("\"%d\\n\", ");
+                match var {
+                    Variable::Int => {
+                        emitted.push_str("printf(\"%d\\n\", ");
                         emitted.push_str(&id);
+                        emitted.push_str(");\n");
                     },
-                    "flt" => {
-                        emitted.push_str("\"%f\\n\", ");
+                    Variable::Float => {
+                        emitted.push_str("printf(\"%f\\n\", ");
                         emitted.push_str(&id);
+                        emitted.push_str(");\n");
                     },
-                    "bln" => {
+                    Variable::Bool => {
+                        emitted.push_str("printf(");
                         emitted.push_str(&id);
-                        emitted.push_str(" ? \"true\\n\" : \"false\\n\"");
-                    }
-                    _ => throw(Error::CouldNotEmit (id.to_string())),
+                        emitted.push_str(" ? \"true\\n\" : \"false\\n\");\n");
+                    },
                 }
-                emitted.push_str(");\n");
             }
         }
         emitted.pop();
@@ -209,6 +236,10 @@ impl Emitter {
                     condition: _,
                     body_true: _,
                     body_false: _,
+                } | Expression::StructInit {
+                    identifier: _,
+                    name: _,
+                    variables: _,
                 } => code.push_str("\n"),
                 _ => code.push_str(";\n"),
             };
@@ -239,12 +270,76 @@ impl Emitter {
                 datatype: d,
                 identifier: i,
             } => format!("{} {}", self.match_type(d.to_string()), i),
+            Expression::Struct {
+                identifier: i,
+                variables: v,
+            } => {
+                let mut emitted = "struct ".to_string();
+                emitted.push_str(&i);
+                emitted.push_str(" {\n");
+                // Push each variable in the structure
+                for (varname, vartype) in v.iter() {
+                    emitted.push_str(&self.match_type(vartype.to_string()));
+                    emitted.push(' ');
+                    emitted.push_str(varname);
+                    emitted.push_str(";\n");
+                }
+                // Register this structure in the scope
+                self.environment.register_struct(scope, i.to_string(), v.to_owned());
+                emitted.push_str("}");
+                emitted.to_owned()
+            },
+            Expression::StructInit {
+                identifier: i,
+                name: n,
+                variables: v,
+            } => {
+                let mut emitted = "struct ".to_string();
+                emitted.push_str(&i);
+                emitted.push(' ');
+                emitted.push_str(&n);
+                emitted.push_str(";\n");
+                // Push each variable in the structure and register each name in the scope
+                for (varname, expr) in v {
+                    // `scoped_name` is of the form `struct.field`
+                    let scoped_name = format!("{}.{}", &n, &varname);
+                    emitted.push_str(&scoped_name);
+                    emitted.push_str(" = ");
+                    emitted.push_str(&self.emit(&*expr, scope));
+                    emitted.push_str(";\n");
+
+                    // Look up this struct in the current scope,
+                    // get the variable type from the struct,
+                    // and register the scoped name (`struct.field`) in the
+                    // current environment
+                    let structure = self.environment.lookup_struct(scope, &i);
+
+                    let varstr = match structure.get(varname) {
+                        Some(v) => v,
+                        None => throw(Error::UndeclaredVariable (scoped_name.to_string())),
+                    };
+                    let variable = match varstr.as_str() {
+                        "int" => Variable::Int,
+                        "flt" => Variable::Float,
+                        "bln" => Variable::Bool,
+                        _ => throw(Error::ExpectedDatatypeKeyword (varname.to_string())),
+                    };
+                    self.environment.register(scope, scoped_name, variable);
+                }
+                emitted.to_owned()
+            },
             Expression::Assignment {
                 datatype: d,
                 identifier: i,
                 value: e,
             } => {
-                self.environment.register(scope, i.clone(), d.clone());
+                let var = match d.as_str() {
+                    "int" => Variable::Int,
+                    "flt" => Variable::Float,
+                    "bln" => Variable::Bool,
+                    _ => throw(Error::ExpectedDatatypeKeyword (d.to_string())),
+                };
+                self.environment.register(scope, i.clone(), var);
                 format!("{} {} = {}", self.match_type(d.to_string()), i, self.emit(&*e, scope))
             },
             Expression::Reassignment {
