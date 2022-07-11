@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.15.1
+
+Fixed a bug preventing compilation of if & while statements.
+
 ## Version 0.15.0
 
 Fixed variable scoping (bumped from v0.13.0 release).

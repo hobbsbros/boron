@@ -275,10 +275,10 @@ impl Emitter {
                 condition: c,
                 body: b,
             } => {
-                let mut emitted = "while ".to_string();
+                let mut emitted = "while (".to_string();
                 // Emit the condition
                 emitted.push_str(&self.emit(&*c, scope));
-                emitted.push_str(" {\n");
+                emitted.push_str(") {\n");
                 // Emit each expression in the while loop
                 let block = self.emit_block(b.to_vec(), Some(scope));
                 emitted.push_str(&block);
@@ -289,10 +289,10 @@ impl Emitter {
                 condition: c,
                 body: b,
             } => {
-                let mut emitted = "if ".to_string();
+                let mut emitted = "if (".to_string();
                 // Emit the condition
                 emitted.push_str(&self.emit(&*c, scope));
-                emitted.push_str(" {\n");
+                emitted.push_str(") {\n");
                 // Emit each expression in the if statement
                 let block = self.emit_block(b.to_vec(), Some(scope));
                 emitted.push_str(&block);
@@ -304,10 +304,10 @@ impl Emitter {
                 body_true: t,
                 body_false: f,
             } => {
-                let mut emitted = "if ".to_string();
+                let mut emitted = "if (".to_string();
                 // Emit the condition
                 emitted.push_str(&self.emit(&*c, scope));
-                emitted.push_str(" {\n");
+                emitted.push_str(") {\n");
                 // Emit each expression in the if statement
                 let block_true = self.emit_block(t.to_vec(), Some(scope));
                 emitted.push_str(&block_true);
