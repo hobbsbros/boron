@@ -220,6 +220,16 @@ impl Tokenizer {
         }
     }
 
+    /// Gets the nth token ahead without advancing the stream.
+    pub fn look_ahead(&self, n: usize) -> Option<Token> {
+        let index = self.index + n;
+        if index >= self.tokenstream.len() {
+            None
+        } else {
+            Some(self.tokenstream[index].to_owned())
+        }
+    }
+
     /// Yields all tokens in the stream.
     /// This *does not* consume the token stream.
     pub fn collect(&self) -> Vec<Token> {

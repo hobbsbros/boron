@@ -73,47 +73,6 @@ impl PrefixParselet for StructParselet {
                     variables: body,
                 }
             },
-            // If we see an identifier, this is a struct initialization, not declaration.
-            TokenType::Identifier => {
-                // It's ok to use `unwrap` here because we just checked that there is
-                // at least one more token in the tokenizer.
-                let instance_name = tokenizer.next().unwrap().get_value();
-                let mut variables: Vec<(String, Expression)> = Vec::new();
-
-                match tokenizer.next() {
-                    Some(t) => if t.get_type() != TokenType::OpenBrace {
-                        throw(Error::ExpectedOpenBrace (t.get_value()));
-                    },
-                    None => throw(Error::UnexpectedEof (instance_name)),
-                };
-
-                // Until we find a closing curly brace, parse each variable
-                while let Some(t) = tokenizer.peek() {
-                    if t.get_type() == TokenType::CloseBrace {
-                        tokenizer.next();
-                        break;
-                    }
-
-                    // It's ok to use `unwrap` here because we just checked that there is
-                    // at least one more token left in the tokenizer.
-                    let varname: String = tokenizer.next().unwrap().get_value();
-                    let expr: Expression = match parser.parse(t.get_type().into(), tokenizer) {
-                        Some(e) => e,
-                        None => {
-                            dbg!(&t);
-                            throw(Error::CouldNotParse (t.get_value()));
-                        },
-                    };
-
-                    variables.push((varname, expr));
-                }
-
-                Expression::StructInit {
-                    identifier: name.get_value(),
-                    name: instance_name,
-                    variables,
-                }
-            },
             _ => throw(Error::ExpectedOpenBrace (next.get_value())),
         }
     }

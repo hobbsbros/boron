@@ -5,9 +5,9 @@ struct Person {
     flt height
 }
 
-struct Person john {
+Person john: {
     age 32 + 13
     height 6.0
 }
 
-print(john.age)
+print(john.age, john.height)

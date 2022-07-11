@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.17.0
+
+Changed struct initialization syntax from `struct MyStruct x {}` to `MyStruct x: {}`. 
+
 ## Version 0.16.0
 
 Added support for C-like struct definition and initialization.
