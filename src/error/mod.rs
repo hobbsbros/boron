@@ -24,6 +24,7 @@ pub enum Error {
     ExpectedCloseParen (String),
     ExpectedOpenBrace (String),
     ExpectedAssignment (String),
+    ExpectedSingleQuote (String),
     UndeclaredVariable (String),
 }
 
@@ -81,6 +82,9 @@ pub fn throw(e: Error) -> ! {
         },
         Error::ExpectedAssignment (s) => {
             println!("{}: Expected assignment ':', got token {}", "Error".bold().red(), s);
+        },
+        Error::ExpectedSingleQuote (s) => {
+            println!("{}: Expected single quote ', got token {}", "Error".bold().red(), s);
         },
         Error::UndeclaredVariable (s) => {
             println!("{}: Found undeclared variable {}", "Error".bold().red(), s);

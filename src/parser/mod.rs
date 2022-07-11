@@ -52,6 +52,8 @@ pub enum Expression {
     Float (f32),
     // Boolean
     Bool (bool),
+    // Character
+    Char (char),
     // Variable or function name
     Identifier (String),
     // Datatype keyword
@@ -168,6 +170,7 @@ impl Parser {
         prefix_parselets.insert(TokenType::Int, Box::new(LiteralParselet {}));
         prefix_parselets.insert(TokenType::Float, Box::new(LiteralParselet {}));
         prefix_parselets.insert(TokenType::Bool, Box::new(LiteralParselet {}));
+        prefix_parselets.insert(TokenType::SingleQuote, Box::new(LiteralParselet {}));
         prefix_parselets.insert(TokenType::OpenParen, Box::new(ParenParselet {}));
         prefix_parselets.insert(TokenType::Minus, Box::new(UnaryOpParselet {}));
         prefix_parselets.insert(TokenType::Not, Box::new(UnaryOpParselet {}));

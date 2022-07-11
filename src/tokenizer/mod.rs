@@ -54,7 +54,7 @@ pub struct Tokenizer {
 }
 
 const WHITESPACE: &str = "\r\n ,";
-const SEPARATORS: &str = "\r\n ():,";
+const SEPARATORS: &str = "\r\n ():,'";
 
 /// Provides functions for the `Tokenizer` struct.
 impl Tokenizer {
@@ -114,6 +114,8 @@ impl Tokenizer {
             '{' => Token::new(character.to_string(), TokenType::OpenBrace),
             // Closing curly brace
             '}' => Token::new(character.to_string(), TokenType::CloseBrace),
+            // Single quote
+            '\'' => Token::new(character.to_string(), TokenType::SingleQuote),
             // Assignment
             ':' => Token::new(character.to_string(), TokenType::Assignment),
             // Plus
@@ -186,6 +188,7 @@ impl Tokenizer {
                     "int" => Token::new(sofar, TokenType::Type),
                     "flt" => Token::new(sofar, TokenType::Type),
                     "bln" => Token::new(sofar, TokenType::Type),
+                    "chr" => Token::new(sofar, TokenType::Type),
                     "struct" => Token::new(sofar, TokenType::Struct),
                     "true" => Token::new(sofar, TokenType::Bool),
                     "false" => Token::new(sofar, TokenType::Bool),

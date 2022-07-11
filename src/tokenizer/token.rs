@@ -8,6 +8,7 @@ pub enum TokenType {
     CloseParen,
     OpenBrace,
     CloseBrace,
+    SingleQuote,
     Int,
     Float,
     Bool,

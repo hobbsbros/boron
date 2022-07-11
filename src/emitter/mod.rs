@@ -87,12 +87,10 @@ impl Environment {
 /// Represents the types of variables to be stored in a scope.
 #[derive(Clone, Debug)]
 pub enum Variable {
-    // Holds the name of the integer.
     Int,
-    // Holds the name of the floating point.
     Float,
-    // Holds the name of the Boolean.
     Bool,
+    Char,
 }
 
 
@@ -180,6 +178,7 @@ impl Emitter {
             "int" => "int",
             "flt" => "float",
             "bln" => "bool",
+            "chr" => "char",
             _ => datatype.as_str(),
         };
 
@@ -209,6 +208,11 @@ impl Emitter {
                         emitted.push_str("printf(");
                         emitted.push_str(&id);
                         emitted.push_str(" ? \"true\\n\" : \"false\\n\");\n");
+                    },
+                    Variable::Char => {
+                        emitted.push_str("printf(\"%c\\n\", ");
+                        emitted.push_str(&id);
+                        emitted.push_str(");\n");
                     },
                 }
             }
@@ -255,6 +259,7 @@ impl Emitter {
             Expression::Int (i) => format!("{}", i),
             Expression::Float (f) => format!("{}", f),
             Expression::Bool (b) => format!("{}", b),
+            Expression::Char (c) => format!("'{}'", c),
             Expression::Identifier (s) => format!("{}", s),
             Expression::Type (t) => throw(Error::CouldNotEmit (t.to_string())),
             Expression::UnaryOp {
@@ -322,6 +327,7 @@ impl Emitter {
                         "int" => Variable::Int,
                         "flt" => Variable::Float,
                         "bln" => Variable::Bool,
+                        "chr" => Variable::Char,
                         _ => throw(Error::ExpectedDatatypeKeyword (varname.to_string())),
                     };
                     self.environment.register(scope, scoped_name, variable);
@@ -337,6 +343,7 @@ impl Emitter {
                     "int" => Variable::Int,
                     "flt" => Variable::Float,
                     "bln" => Variable::Bool,
+                    "chr" => Variable::Char,
                     _ => throw(Error::ExpectedDatatypeKeyword (d.to_string())),
                 };
                 self.environment.register(scope, i.clone(), var);

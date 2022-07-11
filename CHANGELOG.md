@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.18.0
+
+Added support for characters.
+
 ## Version 0.17.1
 
 Fixed a bug causing successive variable assignments to halt parsing.
