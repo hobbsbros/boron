@@ -32,31 +32,32 @@ impl PrefixParselet for IdentifierParselet {
         };
 
         // Look ahead two tokens
+        // We're expecting this to be an identifier for a struct initialization
         let two = match tokenizer.look_ahead(1) {
+            Some(t) => t,
+            None => return Expression::Identifier (token.get_value()),
+        };
+
+        // Look ahead three tokens
+        // We're expecting this to be an opening brace for a struct initialization
+        let three = match tokenizer.look_ahead(2) {
             Some(t) => t,
             None => return Expression::Identifier (token.get_value()),
         };
 
         // If the next token is an identifier and the token after that is assignment, return a struct initialization
         // Otherwise, return the identifier
-        if next.get_type() == TokenType::Identifier && two.get_type() == TokenType::Assignment {
+        if next.get_type() == TokenType::Identifier
+            && two.get_type() == TokenType::Assignment
+            && three.get_type() == TokenType::OpenBrace
+        {
             // It's ok to use `unwrap` here because we just checked that there is
-            // at least one more token in the tokenizer.
+            // at least three more tokens in the tokenizer.
             let instance_name = tokenizer.next().unwrap().get_value();
             let mut variables: Vec<(String, Expression)> = Vec::new();
-
-            match tokenizer.next() {
-                Some(t) => if t.get_type() != TokenType::Assignment {
-                    throw(Error::ExpectedAssignment (t.get_value()));
-                },
-                None => throw(Error::UnexpectedEof (instance_name)),
-            };
-            match tokenizer.next() {
-                Some(t) => if t.get_type() != TokenType::OpenBrace {
-                    throw(Error::ExpectedOpenBrace (t.get_value()));
-                },
-                None => throw(Error::UnexpectedEof (instance_name)),
-            };
+            // Consume the assignment operator and opening brace
+            tokenizer.next().unwrap();
+            tokenizer.next().unwrap();
 
             // Until we find a closing curly brace, parse each variable
             while let Some(t) = tokenizer.peek() {

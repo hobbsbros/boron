@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.17.1
+
+Fixed a bug causing successive variable assignments to halt parsing.
+
 ## Version 0.17.0
 
 Changed struct initialization syntax from `struct MyStruct x {}` to `MyStruct x: {}`. 
