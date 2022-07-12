@@ -92,6 +92,7 @@ pub enum Variable {
     Bool,
     Char,
     Void,
+    Struct (String),
 }
 
 /// Provides an interface for functions on variable types.
@@ -104,7 +105,7 @@ impl Variable {
             "bln" => Variable::Bool,
             "chr" => Variable::Char,
             "nul" => Variable::Void,
-            _ => throw(Error::ExpectedDatatypeKeyword (string.to_string())),
+            _ => Variable::Struct (string.to_string()),
         }
     }
     
@@ -134,6 +135,9 @@ impl Variable {
             },
             Variable::Void => {
                 emitted.push_str("printf(\"\\n\")");
+            },
+            Variable::Struct (_) => {
+                unreachable!()
             },
         }
         emitted.to_owned()
@@ -222,15 +226,15 @@ impl Emitter {
     /// Emits a datatype name based on the C name.
     fn match_type(&self, datatype: String) -> String {
         let type_str = match datatype.as_str() {
-            "int" => "int",
-            "flt" => "float",
-            "bln" => "bool",
-            "chr" => "char",
-            "nul" => "void",
-            _ => datatype.as_str(),
+            "int" => "int".to_string(),
+            "flt" => "float".to_string(),
+            "bln" => "bool".to_string(),
+            "chr" => "char".to_string(),
+            "nul" => "void".to_string(),
+            _ => format!("struct {}", datatype.as_str()),
         };
 
-        type_str.to_owned()
+        type_str
     }
 
     /// Emits a `printf` expression.
@@ -249,21 +253,21 @@ impl Emitter {
     }
 
     /// Emits a block of code.
-    fn emit_block(&mut self, block: Vec<Expression>, parent: Option<usize>) -> (String, String) {
+    fn emit_block(&mut self, block: Vec<Expression>, parent: Option<usize>) -> (String, String, String) {
         let scope = self.environment.add(parent);
         let mut code = String::new();
-        let mut header = String::new();
+        let mut functions = String::new();
+        let mut structs = String::new();
 
         for expression in block {
             let line = &self.emit(&expression, scope);
             match expression {
-                Expression::StructInit {
+                Expression::Struct {
                     identifier: _,
-                    name: _,
                     variables: _,
                 } => {
-                    header.push_str(line);
-                    header.push_str(";\n");
+                    structs.push_str(line);
+                    structs.push_str(";\n");
                 },
                 Expression::FnDeclaration {
                     identifier: _,
@@ -271,8 +275,8 @@ impl Emitter {
                     return_type: _,
                     body: _,
                 } => {
-                    header.push_str(line);
-                    header.push_str("\n");
+                    functions.push_str(line);
+                    functions.push_str("\n");
                 },
                 Expression::While {
                     condition: _,
@@ -295,7 +299,7 @@ impl Emitter {
             };
         }
 
-        (header.to_owned(), code.to_owned())
+        (structs.to_owned(), functions.to_owned(), code.to_owned())
     }
 
     /// Emits an expression.
@@ -351,13 +355,15 @@ impl Emitter {
                 emitted.push_str(&n);
                 emitted.push_str(";\n");
                 // Push each variable in the structure and register each name in the scope
-                for (varname, expr) in v {
+                for (index, (varname, expr)) in v.iter().enumerate() {
                     // `scoped_name` is of the form `struct.field`
                     let scoped_name = format!("{}.{}", &n, &varname);
                     emitted.push_str(&scoped_name);
                     emitted.push_str(" = ");
                     emitted.push_str(&self.emit(&*expr, scope));
-                    emitted.push_str(";\n");
+                    if index < v.len() - 1 {
+                        emitted.push_str(";\n");
+                    }
 
                     // Look up this struct in the current scope,
                     // get the variable type from the struct,
@@ -415,7 +421,7 @@ impl Emitter {
                 emitted.push_str(&self.emit(&*c, scope));
                 emitted.push_str(") {\n");
                 // Emit each expression in the while loop
-                let block = self.emit_block(b.to_vec(), Some(scope)).1;
+                let block = self.emit_block(b.to_vec(), Some(scope)).2;
                 emitted.push_str(&block);
                 emitted.push_str("}");
                 emitted.to_owned()
@@ -429,7 +435,7 @@ impl Emitter {
                 emitted.push_str(&self.emit(&*c, scope));
                 emitted.push_str(") {\n");
                 // Emit each expression in the if statement
-                let block = self.emit_block(b.to_vec(), Some(scope)).1;
+                let block = self.emit_block(b.to_vec(), Some(scope)).2;
                 emitted.push_str(&block);
                 emitted.push_str("}");
                 emitted.to_owned()
@@ -444,11 +450,11 @@ impl Emitter {
                 emitted.push_str(&self.emit(&*c, scope));
                 emitted.push_str(") {\n");
                 // Emit each expression in the if statement
-                let block_true = self.emit_block(t.to_vec(), Some(scope)).1;
+                let block_true = self.emit_block(t.to_vec(), Some(scope)).2;
                 emitted.push_str(&block_true);
                 emitted.push_str("} else {\n");
                 // Emit each expression in the else statement
-                let block_false = self.emit_block(f.to_vec(), Some(scope)).1;
+                let block_false = self.emit_block(f.to_vec(), Some(scope)).2;
                 emitted.push_str(&block_false);
                 emitted.push_str("}");
                 emitted.to_owned()
@@ -500,7 +506,7 @@ impl Emitter {
                 }
                 emitted.push_str(") {\n");
                 // Emit the body
-                let block = self.emit_block(b.to_vec(), Some(scope)).1;
+                let block = self.emit_block(b.to_vec(), Some(scope)).2;
                 emitted.push_str(&block);
                 emitted.push_str("}");
                 emitted.to_owned()
@@ -545,15 +551,16 @@ impl Emitter {
         self.writeln(&datetime);
         self.writeln("");
 
-        let (header, code) = self.emit_block(expressions, None);
+        let (structs, functions, code) = self.emit_block(expressions, None);
 
         // Emit #include statements
         self.writeln("#include <stdio.h>");
         self.writeln("#include <stdbool.h>");
+        self.writeln("");
         
         // Emit header (functions + structs)
-        self.writeln("");
-        self.writeln(&header);
+        self.writeln(&structs);
+        self.writeln(&functions);
 
         // Emit main function
         self.writeln("int main(void) {");

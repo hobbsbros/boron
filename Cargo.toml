@@ -5,7 +5,7 @@ repository = "https://github.com/hobbsbros/boron.git"
 authors = ["Joseph Hobbs"]
 readme = "README.md"
 license = "MIT"
-version = "0.19.1"
+version = "0.20.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

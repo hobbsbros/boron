@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.20.0
+
+Added support for structs as arguments to functions.
+
 ## Version 0.19.1
 
 Fixed function declaration and call parsing errors.
