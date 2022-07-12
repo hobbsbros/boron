@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.19.0
+
+Added support for function declarations and calls.
+
 ## Version 0.18.0
 
 Added support for characters.

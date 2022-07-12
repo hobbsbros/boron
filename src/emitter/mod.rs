@@ -91,6 +91,53 @@ pub enum Variable {
     Float,
     Bool,
     Char,
+    Void,
+}
+
+/// Provides an interface for functions on variable types.
+impl Variable {
+    /// Converts a Boron variable type into a `Variable` variant.
+    pub fn from(string: &String) -> Self {
+        match string.as_str() {
+            "int" => Variable::Int,
+            "flt" => Variable::Float,
+            "bln" => Variable::Bool,
+            "chr" => Variable::Char,
+            "nul" => Variable::Void,
+            _ => throw(Error::ExpectedDatatypeKeyword (string.to_string())),
+        }
+    }
+    
+    /// Generates C code to print a variable.
+    pub fn print(var: Self, id: &String) -> String {
+        let mut emitted = String::new();
+        match var {
+            Variable::Int => {
+                emitted.push_str("printf(\"%d\\n\", ");
+                emitted.push_str(id);
+                emitted.push_str(");\n");
+            },
+            Variable::Float => {
+                emitted.push_str("printf(\"%f\\n\", ");
+                emitted.push_str(id);
+                emitted.push_str(");\n");
+            },
+            Variable::Bool => {
+                emitted.push_str("printf(");
+                emitted.push_str(id);
+                emitted.push_str(" ? \"true\\n\" : \"false\\n\");\n");
+            },
+            Variable::Char => {
+                emitted.push_str("printf(\"%c\\n\", ");
+                emitted.push_str(id);
+                emitted.push_str(");\n");
+            },
+            Variable::Void => {
+                emitted.push_str("printf(\"\\n\")");
+            },
+        }
+        emitted.to_owned()
+    }
 }
 
 
@@ -179,6 +226,7 @@ impl Emitter {
             "flt" => "float",
             "bln" => "bool",
             "chr" => "char",
+            "nul" => "void",
             _ => datatype.as_str(),
         };
 
@@ -192,29 +240,7 @@ impl Emitter {
         for arg in args {
             if let Expression::Identifier (id) = arg {
                 let var = self.environment.lookup(scope, &id);
-
-                match var {
-                    Variable::Int => {
-                        emitted.push_str("printf(\"%d\\n\", ");
-                        emitted.push_str(&id);
-                        emitted.push_str(");\n");
-                    },
-                    Variable::Float => {
-                        emitted.push_str("printf(\"%f\\n\", ");
-                        emitted.push_str(&id);
-                        emitted.push_str(");\n");
-                    },
-                    Variable::Bool => {
-                        emitted.push_str("printf(");
-                        emitted.push_str(&id);
-                        emitted.push_str(" ? \"true\\n\" : \"false\\n\");\n");
-                    },
-                    Variable::Char => {
-                        emitted.push_str("printf(\"%c\\n\", ");
-                        emitted.push_str(&id);
-                        emitted.push_str(");\n");
-                    },
-                }
+                emitted.push_str(&Variable::print(var, &id));
             }
         }
         emitted.pop();
@@ -223,13 +249,31 @@ impl Emitter {
     }
 
     /// Emits a block of code.
-    fn emit_block(&mut self, block: Vec<Expression>, parent: Option<usize>) -> String {
+    fn emit_block(&mut self, block: Vec<Expression>, parent: Option<usize>) -> (String, String) {
         let scope = self.environment.add(parent);
         let mut code = String::new();
+        let mut header = String::new();
 
         for expression in block {
-            code.push_str(&self.emit(&expression, scope));
+            let line = &self.emit(&expression, scope);
             match expression {
+                Expression::StructInit {
+                    identifier: _,
+                    name: _,
+                    variables: _,
+                } => {
+                    header.push_str(line);
+                    header.push_str(";\n");
+                },
+                Expression::FnDeclaration {
+                    identifier: _,
+                    arguments: _,
+                    return_type: _,
+                    body: _,
+                } => {
+                    header.push_str(line);
+                    header.push_str("\n");
+                },
                 Expression::While {
                     condition: _,
                     body: _,
@@ -240,16 +284,18 @@ impl Emitter {
                     condition: _,
                     body_true: _,
                     body_false: _,
-                } | Expression::StructInit {
-                    identifier: _,
-                    name: _,
-                    variables: _,
-                } => code.push_str("\n"),
-                _ => code.push_str(";\n"),
+                } => {
+                    code.push_str(line);
+                    code.push_str("\n");
+                },
+                _ => {
+                    code.push_str(line);
+                    code.push_str(";\n");
+                }
             };
         }
 
-        code.to_owned()
+        (header.to_owned(), code.to_owned())
     }
 
     /// Emits an expression.
@@ -323,13 +369,7 @@ impl Emitter {
                         Some(v) => v,
                         None => throw(Error::UndeclaredVariable (scoped_name.to_string())),
                     };
-                    let variable = match varstr.as_str() {
-                        "int" => Variable::Int,
-                        "flt" => Variable::Float,
-                        "bln" => Variable::Bool,
-                        "chr" => Variable::Char,
-                        _ => throw(Error::ExpectedDatatypeKeyword (varname.to_string())),
-                    };
+                    let variable = Variable::from(&varstr);
                     self.environment.register(scope, scoped_name, variable);
                 }
                 emitted.to_owned()
@@ -339,13 +379,7 @@ impl Emitter {
                 identifier: i,
                 value: e,
             } => {
-                let var = match d.as_str() {
-                    "int" => Variable::Int,
-                    "flt" => Variable::Float,
-                    "bln" => Variable::Bool,
-                    "chr" => Variable::Char,
-                    _ => throw(Error::ExpectedDatatypeKeyword (d.to_string())),
-                };
+                let var = Variable::from(&d);
                 self.environment.register(scope, i.clone(), var);
                 format!("{} {} = {}", self.match_type(d.to_string()), i, self.emit(&*e, scope))
             },
@@ -365,7 +399,7 @@ impl Emitter {
                         for (idx, arg) in a.iter().enumerate() {
                             emitted.push_str(&format!("{}", self.emit(arg, scope)));
                             if idx < a.len() - 1 {
-                                emitted.push('\n');
+                                emitted.push_str(", ");
                             }
                         }
                         emitted.push(')');
@@ -382,7 +416,7 @@ impl Emitter {
                 emitted.push_str(&self.emit(&*c, scope));
                 emitted.push_str(") {\n");
                 // Emit each expression in the while loop
-                let block = self.emit_block(b.to_vec(), Some(scope));
+                let block = self.emit_block(b.to_vec(), Some(scope)).1;
                 emitted.push_str(&block);
                 emitted.push_str("}");
                 emitted.to_owned()
@@ -396,7 +430,7 @@ impl Emitter {
                 emitted.push_str(&self.emit(&*c, scope));
                 emitted.push_str(") {\n");
                 // Emit each expression in the if statement
-                let block = self.emit_block(b.to_vec(), Some(scope));
+                let block = self.emit_block(b.to_vec(), Some(scope)).1;
                 emitted.push_str(&block);
                 emitted.push_str("}");
                 emitted.to_owned()
@@ -411,11 +445,11 @@ impl Emitter {
                 emitted.push_str(&self.emit(&*c, scope));
                 emitted.push_str(") {\n");
                 // Emit each expression in the if statement
-                let block_true = self.emit_block(t.to_vec(), Some(scope));
+                let block_true = self.emit_block(t.to_vec(), Some(scope)).1;
                 emitted.push_str(&block_true);
                 emitted.push_str("} else {\n");
                 // Emit each expression in the else statement
-                let block_false = self.emit_block(f.to_vec(), Some(scope));
+                let block_false = self.emit_block(f.to_vec(), Some(scope)).1;
                 emitted.push_str(&block_false);
                 emitted.push_str("}");
                 emitted.to_owned()
@@ -441,7 +475,40 @@ impl Emitter {
                 
                 emitted.to_owned()
             },
-            
+            Expression::FnDeclaration {
+                identifier: i,
+                arguments: a,
+                return_type: r,
+                body: b,
+            } => {
+                // Add the return type to the emitted code
+                let mut emitted = self.match_type(r.to_string());
+                // Add the function name and an opening parenthesis
+                emitted.push(' ');
+                emitted.push_str(&i);
+                emitted.push('(');
+                // Add each argument's type and name
+                for (index, (arg, argtype)) in a.iter().enumerate() {
+                    emitted.push_str(argtype);
+                    emitted.push(' ');
+                    emitted.push_str(arg);
+                    if index < a.len() - 1 {
+                        emitted.push_str(", ");
+                    }
+                }
+                emitted.push_str(") {\n");
+                // Emit the body
+                let block = self.emit_block(b.to_vec(), Some(scope)).1;
+                emitted.push_str(&block);
+                emitted.push_str("}");
+                emitted.to_owned()
+            },
+            Expression::Return (v) => {
+                let mut emitted = "return ".to_string();
+                let expr = self.emit(&*v, scope);
+                emitted.push_str(&expr);
+                emitted.to_owned()
+            },
         };
 
         value.to_owned()
@@ -476,15 +543,19 @@ impl Emitter {
         self.writeln(&datetime);
         self.writeln("");
 
-        // Emit header information
+        let (header, code) = self.emit_block(expressions, None);
+
+        // Emit #include statements
         self.writeln("#include <stdio.h>");
         self.writeln("#include <stdbool.h>");
+        
+        // Emit header (functions + structs)
         self.writeln("");
+        self.writeln(&header);
+
+        // Emit main function
         self.writeln("int main(void) {");
-
-        let code = self.emit_block(expressions, None);
         self.writeln(&code);
-
         self.writeln("return 0;\n}");
 
         self.code.to_owned()

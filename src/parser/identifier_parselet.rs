@@ -1,6 +1,8 @@
 //! Provides a parselet for identifiers.
 
 
+use std::collections::HashMap;
+
 use crate::parser::{
     Parser,
     Expression,
@@ -54,7 +56,7 @@ impl PrefixParselet for IdentifierParselet {
             // It's ok to use `unwrap` here because we just checked that there is
             // at least three more tokens in the tokenizer.
             let instance_name = tokenizer.next().unwrap().get_value();
-            let mut variables: Vec<(String, Expression)> = Vec::new();
+            let mut variables: HashMap<String, Expression> = HashMap::new();
             // Consume the assignment operator and opening brace
             tokenizer.next().unwrap();
             tokenizer.next().unwrap();
@@ -77,7 +79,7 @@ impl PrefixParselet for IdentifierParselet {
                     },
                 };
 
-                variables.push((varname, expr));
+                variables.insert(varname, expr);
             }
 
             Expression::StructInit {

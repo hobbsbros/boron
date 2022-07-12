@@ -16,6 +16,8 @@ pub mod unaryop_parselet;
 pub mod ifelse_parselet;
 pub mod ternary_parselet;
 pub mod struct_parselet;
+pub mod fndeclaration_parselet;
+pub mod return_parselet;
 
 
 use std::collections::HashMap;
@@ -35,6 +37,8 @@ use unaryop_parselet::UnaryOpParselet;
 use ifelse_parselet::IfElseParselet;
 use ternary_parselet::TernaryParselet;
 use struct_parselet::StructParselet;
+use fndeclaration_parselet::FnDeclarationParselet;
+use return_parselet::ReturnParselet;
 
 pub use crate::tokenizer::{
     Token,
@@ -83,7 +87,7 @@ pub enum Expression {
     StructInit {
         identifier: String,
         name: String,
-        variables: Vec<(String, Expression)>,
+        variables: HashMap<String, Expression>,
     },
     // Variable assignment
     Assignment {
@@ -123,6 +127,15 @@ pub enum Expression {
         body_true: Box<Expression>,
         body_false: Box<Expression>,
     },
+    // Function declaration
+    FnDeclaration {
+        identifier: String,
+        arguments: HashMap<String, String>,
+        return_type: String,
+        body: Vec<Expression>,
+    },
+    // Return statement
+    Return (Box<Expression>),
 }
 
 
@@ -131,6 +144,7 @@ impl From<TokenType> for u8 {
     fn from(t: TokenType) -> u8 {
         match t {
             TokenType::Assignment => 1,
+            TokenType::FnDeclaration => 1,
             TokenType::While => 1,
             TokenType::Plus => 3,
             TokenType::Minus => 3,
@@ -175,6 +189,7 @@ impl Parser {
         prefix_parselets.insert(TokenType::Minus, Box::new(UnaryOpParselet {}));
         prefix_parselets.insert(TokenType::Not, Box::new(UnaryOpParselet {}));
         prefix_parselets.insert(TokenType::Struct, Box::new(StructParselet {}));
+        prefix_parselets.insert(TokenType::Return, Box::new(ReturnParselet {}));
         infix_parselets.insert(TokenType::Assignment, Box::new(AssignmentParselet {}));
         infix_parselets.insert(TokenType::OpenParen, Box::new(OpenParenParselet {}));
         infix_parselets.insert(TokenType::Plus, Box::new(BinOpParselet {}));
@@ -187,6 +202,7 @@ impl Parser {
         infix_parselets.insert(TokenType::LessEqual, Box::new(BinOpParselet {}));
         infix_parselets.insert(TokenType::Equal, Box::new(BinOpParselet {}));
         infix_parselets.insert(TokenType::TernaryIf, Box::new(TernaryParselet {}));
+        infix_parselets.insert(TokenType::FnDeclaration, Box::new(FnDeclarationParselet {}));
 
         Self {
             prefix_parselets,

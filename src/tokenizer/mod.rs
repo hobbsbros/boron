@@ -116,12 +116,28 @@ impl Tokenizer {
             '}' => Token::new(character.to_string(), TokenType::CloseBrace),
             // Single quote
             '\'' => Token::new(character.to_string(), TokenType::SingleQuote),
-            // Assignment
-            ':' => Token::new(character.to_string(), TokenType::Assignment),
+            // Assignment or function declaration
+            ':' => {
+                match charstream.peek() {
+                    Some(':') => {
+                        charstream.next();
+                        Token::new("::".to_string(), TokenType::FnDeclaration)
+                    },
+                    _ => Token::new(character.to_string(), TokenType::Assignment)
+                }
+            },
             // Plus
             '+' => Token::new(character.to_string(), TokenType::Plus),
-            // Minus
-            '-' => Token::new(character.to_string(), TokenType::Minus),
+            // Minus or function return type
+            '-' => {
+                match charstream.peek() {
+                    Some('>') => {
+                        charstream.next();
+                        Token::new("->".to_string(), TokenType::FnReturnType)
+                    },
+                    _ => Token::new(character.to_string(), TokenType::Minus)
+                }
+            },
             // Multiply
             '*' => Token::new(character.to_string(), TokenType::Multiply),
             // Divide
@@ -195,6 +211,7 @@ impl Tokenizer {
                     "while" => Token::new(sofar, TokenType::While),
                     "if" => Token::new(sofar, TokenType::If),
                     "else" => Token::new(sofar, TokenType::Else),
+                    "ret" => Token::new(sofar, TokenType::Return),
                     _ => Token::new(sofar, TokenType::Identifier),
                 };
 
