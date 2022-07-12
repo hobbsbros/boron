@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.19.1
+
+Fixed function declaration and call parsing errors.
+
 ## Version 0.19.0
 
 Added support for function declarations and calls.

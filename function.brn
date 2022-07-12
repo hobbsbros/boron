@@ -1,0 +1,8 @@
+# Testing the behavior of Boron functions
+
+multiply :: flt x, flt y -> flt {
+    ret x * y
+}
+
+flt z: multiply(3, 3)
+print(z)

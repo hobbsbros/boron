@@ -379,8 +379,7 @@ impl Emitter {
                 identifier: i,
                 value: e,
             } => {
-                let var = Variable::from(&d);
-                self.environment.register(scope, i.clone(), var);
+                self.environment.register(scope, i.clone(), Variable::from(&d));
                 format!("{} {} = {}", self.match_type(d.to_string()), i, self.emit(&*e, scope))
             },
             Expression::Reassignment {
@@ -488,13 +487,16 @@ impl Emitter {
                 emitted.push_str(&i);
                 emitted.push('(');
                 // Add each argument's type and name
+                // Also register each argument as a variable in the current scope
                 for (index, (arg, argtype)) in a.iter().enumerate() {
-                    emitted.push_str(argtype);
+                    emitted.push_str(&self.match_type(argtype.to_string()));
                     emitted.push(' ');
                     emitted.push_str(arg);
                     if index < a.len() - 1 {
                         emitted.push_str(", ");
                     }
+
+                    self.environment.register(scope, arg.clone(), Variable::from(&argtype));
                 }
                 emitted.push_str(") {\n");
                 // Emit the body

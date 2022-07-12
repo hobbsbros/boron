@@ -35,17 +35,15 @@ impl InfixParselet for FnDeclarationParselet {
             if t.get_type() == TokenType::FnReturnType
             || t.get_type() == TokenType::OpenBrace
             {
-                tokenizer.next();
                 break;
             }
 
             // Parse each type and variable name
 
             // Parse the type
-            let option_argtype = match tokenizer.next() {
-                Some(t) => t,
-                None => throw(Error::UnexpectedEof (token.get_value())),
-            };
+            // It's ok to use `unwrap` here because we know that there's at least one more
+            // token left in the tokenizer
+            let option_argtype = tokenizer.next().unwrap();
             let argtype = match option_argtype.get_type() {
                 TokenType::Type
                 | TokenType::Identifier => option_argtype.get_value(),
@@ -65,34 +63,40 @@ impl InfixParselet for FnDeclarationParselet {
             args.insert(arg, argtype);
         }
 
-        // Parse the return type (if there is one)
+        // Parse the return type
         let peek = match tokenizer.peek() {
             Some(n) => n,
             None => throw(Error::UnexpectedEof (token.get_value())),
         };
-        let return_type: String = match peek.get_type() {
-            TokenType::Type
-            | TokenType::Identifier => {
-                tokenizer.next();
-                peek.get_value()
+        let return_type = match peek.get_type() {
+            TokenType::FnReturnType => {
+                // Consume the -> token
+                // It's ok to use unwrap here because we know there's at least
+                // one more token in the stream
+                tokenizer.next().unwrap();
+
+                let next = match tokenizer.next() {
+                    Some(n) => n,
+                    None => throw(Error::UnexpectedEof (token.get_value())),
+                };
+                let value = match next.get_type() {
+                    TokenType::Type
+                    | TokenType::Identifier => {
+                        tokenizer.next();
+                        next.get_value()
+                    },
+                    _ => throw(Error::ExpectedDatatypeKeyword (peek.get_value())),
+                };
+                value.to_owned()
             },
             TokenType::OpenBrace => {
                 tokenizer.next();
                 "nul".to_string()
             },
-            _ => throw(Error::ExpectedDatatypeKeyword (peek.get_value())),
+            _ => throw(Error::ExpectedReturnType (peek.get_value())),
         };
         
         // Parse the function body
-        let next = match tokenizer.peek() {
-            Some(t) => t,
-            None => throw(Error::UnexpectedEof (token.get_value())),
-        };
-        match next.get_type() {
-            TokenType::OpenBrace => tokenizer.next(),
-            _ => throw(Error::ExpectedOpenBrace (next.get_value())),
-        };
-
         let mut body: Vec<Expression> = Vec::new();
         // Until we find a closing curly brace, parse each expression in the loop
         while let Some(t) = tokenizer.peek() {
