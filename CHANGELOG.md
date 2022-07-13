@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.24.0
+
+Added support for importing functions from other files.
+
+Changed return keyword from `ret` to `return` to avoid confusion with assignment keyword `let`.
+
 ## Version 0.23.2
 
 Fixed a bug preventing the tokenizer from skipping tabs.

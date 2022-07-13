@@ -206,13 +206,14 @@ impl Tokenizer {
                     "bln" => Token::new(sofar, TokenType::Type),
                     "chr" => Token::new(sofar, TokenType::Type),
                     "let" => Token::new(sofar, TokenType::Let),
+                    "use" => Token::new(sofar, TokenType::Use),
                     "struct" => Token::new(sofar, TokenType::Struct),
                     "true" => Token::new(sofar, TokenType::Bool),
                     "false" => Token::new(sofar, TokenType::Bool),
                     "while" => Token::new(sofar, TokenType::While),
                     "if" => Token::new(sofar, TokenType::If),
                     "else" => Token::new(sofar, TokenType::Else),
-                    "ret" => Token::new(sofar, TokenType::Return),
+                    "return" => Token::new(sofar, TokenType::Return),
                     _ => Token::new(sofar, TokenType::Identifier),
                 };
 

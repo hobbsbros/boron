@@ -272,6 +272,24 @@ impl Emitter {
         }
     }
 
+    /// Aliases the standard library if necessary.
+    fn match_module(&self, module: String) -> String {
+        let top = module.split("/").collect::<Vec<&str>>();
+        match top[0] {
+            "std" => {
+                let stdpath = vec![".boron", "std"];
+                let path = top[1..].iter();
+                stdpath
+                    .iter()
+                    .chain(path)
+                    .map(|x| x.to_string())
+                    .collect::<Vec<String>>()
+                    .join("/")
+            },
+            _ => module.to_owned()
+        }
+    }
+
     /// Emits a `printf` expression.
     fn emit_printf(&self, args: Vec<Expression>, scope: usize, in_fn: bool) -> String {
         // "print" is a special case due to idiosyncracies of C & Boron
@@ -288,11 +306,12 @@ impl Emitter {
     }
 
     /// Emits a block of code.
-    fn emit_block(&mut self, block: Vec<Expression>, parent: Option<usize>, in_fn: bool) -> (String, String, String) {
+    fn emit_block(&mut self, block: Vec<Expression>, parent: Option<usize>, in_fn: bool) -> (String, String, String, String) {
         let scope = self.environment.add(parent);
         let mut code = String::new();
         let mut functions = String::new();
         let mut structs = String::new();
+        let mut includes = String::new();
 
         for expression in block {
             let line = &self.emit(&expression, scope, in_fn);
@@ -327,6 +346,10 @@ impl Emitter {
                     code.push_str(line);
                     code.push_str("\n");
                 },
+                Expression::Use (_) => {
+                    includes.push_str(line);
+                    includes.push_str("\n");
+                }
                 _ => {
                     code.push_str(line);
                     code.push_str(";\n");
@@ -334,7 +357,7 @@ impl Emitter {
             };
         }
 
-        (structs.to_owned(), functions.to_owned(), code.to_owned())
+        (includes.to_owned(), structs.to_owned(), functions.to_owned(), code.to_owned())
     }
 
     /// Emits an expression.
@@ -501,7 +524,7 @@ impl Emitter {
                 emitted.push_str(&self.emit(&*c, scope, in_fn));
                 emitted.push_str(") {\n");
                 // Emit each expression in the while loop
-                let block = self.emit_block(b.to_vec(), Some(scope), in_fn).2;
+                let block = self.emit_block(b.to_vec(), Some(scope), in_fn).3;
                 emitted.push_str(&block);
                 emitted.push_str("}");
                 emitted.to_owned()
@@ -515,7 +538,7 @@ impl Emitter {
                 emitted.push_str(&self.emit(&*c, scope, in_fn));
                 emitted.push_str(") {\n");
                 // Emit each expression in the if statement
-                let block = self.emit_block(b.to_vec(), Some(scope), in_fn).2;
+                let block = self.emit_block(b.to_vec(), Some(scope), in_fn).3;
                 emitted.push_str(&block);
                 emitted.push_str("}");
                 emitted.to_owned()
@@ -530,11 +553,11 @@ impl Emitter {
                 emitted.push_str(&self.emit(&*c, scope, in_fn));
                 emitted.push_str(") {\n");
                 // Emit each expression in the if statement
-                let block_true = self.emit_block(t.to_vec(), Some(scope), in_fn).2;
+                let block_true = self.emit_block(t.to_vec(), Some(scope), in_fn).3;
                 emitted.push_str(&block_true);
                 emitted.push_str("} else {\n");
                 // Emit each expression in the else statement
-                let block_false = self.emit_block(f.to_vec(), Some(scope), in_fn).2;
+                let block_false = self.emit_block(f.to_vec(), Some(scope), in_fn).3;
                 emitted.push_str(&block_false);
                 emitted.push_str("}");
                 emitted.to_owned()
@@ -596,7 +619,7 @@ impl Emitter {
                 }
                 emitted.push_str(") {\n");
                 // Emit the body
-                let block = self.emit_block(b.to_vec(), Some(scope), true).2;
+                let block = self.emit_block(b.to_vec(), Some(scope), true).3;
                 emitted.push_str(&block);
                 emitted.push_str("}");
                 emitted.to_owned()
@@ -605,6 +628,12 @@ impl Emitter {
                 let mut emitted = "return ".to_string();
                 let expr = self.emit(&*v, scope, true);
                 emitted.push_str(&expr);
+                emitted.to_owned()
+            },
+            Expression::Use (m) => {
+                let mut emitted = "#include \"".to_string();
+                emitted.push_str(&self.match_module(m.to_string()));
+                emitted.push_str(".h\"");
                 emitted.to_owned()
             },
         };
@@ -619,7 +648,7 @@ impl Emitter {
     }
 
     /// Compiles a list of expressions into a string of C code.
-    pub fn compile(&mut self, expressions: Vec<Expression>) -> String {
+    pub fn compile_exe(&mut self, expressions: Vec<Expression>) -> String {
         // Get current time
         let now = Local::now();
         let datetime: String = format!(
@@ -636,16 +665,17 @@ impl Emitter {
         let version: String = format!("// Version {}", VERSION);
 
         // Emit file metadata
-        self.writeln("// Autogenerated by the Boron compiler");
+        self.writeln("// Executable autogenerated by the Boron compiler");
         self.writeln(&version);
         self.writeln(&datetime);
         self.writeln("");
 
-        let (structs, functions, code) = self.emit_block(expressions, None, false);
+        let (includes, structs, functions, code) = self.emit_block(expressions, None, false);
 
         // Emit #include statements
         self.writeln("#include <stdio.h>");
         self.writeln("#include <stdbool.h>");
+        self.writeln(&includes);
         self.writeln("");
         
         // Emit header (functions + structs)
@@ -656,6 +686,56 @@ impl Emitter {
         self.writeln("int main(void) {");
         self.writeln(&code);
         self.writeln("return 0;\n}");
+
+        self.code.to_owned()
+    }
+
+    /// Compiles a list of expressions into a C header file.
+    pub fn compile_lib(&mut self, name: String, expressions: Vec<Expression>) -> String {
+        // Get current time
+        let now = Local::now();
+        let datetime: String = format!(
+            "// Created on {:04}/{:02}/{:02} at {:02}:{:02}:{:02} local time",
+            now.year(),
+            now.month(),
+            now.day(),
+            now.hour(),
+            now.minute(),
+            now.second(),
+        );
+
+        // Get current version
+        let version: String = format!("// Version {}", VERSION);
+
+        // Emit file metadata
+        self.writeln("// Library autogenerated by the Boron compiler");
+        self.writeln(&version);
+        self.writeln(&datetime);
+        self.writeln("");
+
+        // Only emit structs and functions
+        let (includes, structs, functions, _) = self.emit_block(expressions, None, false);
+        let upper_name = name.to_ascii_uppercase();
+
+        let header_guard_start = format!("#ifndef {}\n#define {}", upper_name, upper_name);
+        let header_guard_end = "#endif".to_string();
+
+        // Emit header guard
+        self.writeln(&header_guard_start);
+        self.writeln("");
+
+        // Emit #include statements
+        self.writeln("#include <stdio.h>");
+        self.writeln("#include <stdbool.h>");
+        self.writeln(&includes);
+        self.writeln("");
+        
+        // Emit header (functions + structs)
+        self.writeln(&structs);
+        self.writeln(&functions);
+
+        // Emit header guard
+        self.writeln(&header_guard_end);
 
         self.code.to_owned()
     }

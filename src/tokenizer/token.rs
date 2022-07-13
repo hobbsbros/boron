@@ -35,6 +35,7 @@ pub enum TokenType {
     Else,
     TernaryIf,
     TernaryElse,
+    Use,
     Unknown,
 }
 

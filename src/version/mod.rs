@@ -1,4 +1,4 @@
 //! Provides version information for the Boron compiler.
 
 
-pub const VERSION: &str = "0.23.2";
+pub const VERSION: &str = "0.24.0";

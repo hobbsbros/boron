@@ -20,6 +20,7 @@ pub mod struct_parselet;
 pub mod structinit_parselet;
 pub mod fndeclaration_parselet;
 pub mod return_parselet;
+pub mod use_parselet;
 
 
 use std::collections::HashMap;
@@ -43,6 +44,7 @@ use struct_parselet::StructParselet;
 use structinit_parselet::StructInitParselet;
 use fndeclaration_parselet::FnDeclarationParselet;
 use return_parselet::ReturnParselet;
+use use_parselet::UseParselet;
 
 pub use crate::tokenizer::{
     Token,
@@ -138,6 +140,8 @@ pub enum Expression {
     },
     // Return statement
     Return (Box<Expression>),
+    // Use statement
+    Use (String),
 }
 
 
@@ -192,6 +196,7 @@ impl Parser {
         prefix_parselets.insert(TokenType::Not, Box::new(UnaryOpParselet {}));
         prefix_parselets.insert(TokenType::Struct, Box::new(StructParselet {}));
         prefix_parselets.insert(TokenType::Return, Box::new(ReturnParselet {}));
+        prefix_parselets.insert(TokenType::Use, Box::new(UseParselet {}));
         prefix_parselets.insert(TokenType::Let, Box::new(AssignmentParselet {}));
         prefix_parselets.insert(TokenType::OpenBrace, Box::new(StructInitParselet {}));
         infix_parselets.insert(TokenType::Assignment, Box::new(ReassignmentParselet {}));
@@ -257,7 +262,7 @@ impl Parser {
     
             left = parselet.parse(self, tokenizer, left, token);
         }
-
+        
         Some(left)
     }
 

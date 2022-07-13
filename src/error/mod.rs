@@ -9,6 +9,7 @@ use crate::version::VERSION;
 /// Outlines different errors thrown by the Boron compiler.
 pub enum Error {
     NoFileProvided,
+    UnexpectedCliFlag (String),
     CouldNotReadFile (String),
     CouldNotCreate (String),
     CouldNotWriteFile (String),
@@ -41,6 +42,9 @@ pub fn throw(e: Error) -> ! {
     match e {
         Error::NoFileProvided => {
             println!("{}: No input file specified.", "Error".bold().red());
+        },
+        Error::UnexpectedCliFlag (s) => {
+            println!("{}: Got unexpected CLI flag {}", "Error".bold().red(), s);
         },
         Error::CouldNotReadFile (s) => {
             println!("{}: Could not read input file {}", "Error".bold().red(), s);
