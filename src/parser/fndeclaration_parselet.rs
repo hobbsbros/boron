@@ -1,7 +1,5 @@
 //! Provides a parselet for function declarations.
 
-use std::collections::HashMap;
-
 use crate::parser::{
     Parser,
     Expression,
@@ -30,7 +28,7 @@ impl InfixParselet for FnDeclarationParselet {
         };
 
         // Parse each argument to the function
-        let mut args: HashMap<String, String> = HashMap::new();
+        let mut args: Vec<(String, String)> = Vec::new();
         while let Some(t) = tokenizer.peek() {
             if t.get_type() == TokenType::FnReturnType
             || t.get_type() == TokenType::OpenBrace
@@ -60,7 +58,7 @@ impl InfixParselet for FnDeclarationParselet {
                 _ => throw(Error::ExpectedIdentifier (option_arg.get_value())),
             };
 
-            args.insert(arg, argtype);
+            args.push((arg, argtype));
         }
 
         // Parse the return type

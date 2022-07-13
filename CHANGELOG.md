@@ -1,8 +1,12 @@
 # Changelog
 
+## Version 0.20.2
+
+Fixed a bug causing hashing to scramble the order of function parameters.
+
 ## Version 0.20.1
 
-Fixed a bug preventing functions from modifying struct arguments.
+Fixed a bug preventing functions from modifying struct fields.
 
 ## Version 0.20.0
 

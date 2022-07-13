@@ -132,7 +132,7 @@ pub enum Expression {
     // Function declaration
     FnDeclaration {
         identifier: String,
-        arguments: HashMap<String, String>,
+        arguments: Vec<(String, String)>,
         return_type: String,
         body: Vec<Expression>,
     },
