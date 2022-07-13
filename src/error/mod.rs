@@ -31,6 +31,7 @@ pub enum Error {
     FoundBareStruct,
     TooManyLeadingKeywords (String),
     UndeclaredVariable (String),
+    CouldNotGetCurrentDir,
 }
 
 
@@ -108,6 +109,9 @@ pub fn throw(e: Error) -> ! {
         },
         Error::UndeclaredVariable (s) => {
             println!("{}: Found undeclared variable {}", "Error".bold().red(), s);
+        },
+        Error::CouldNotGetCurrentDir => {
+            println!("{}: Could not determine working directory", "Error".bold().red());
         },
     };
     

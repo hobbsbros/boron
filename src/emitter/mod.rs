@@ -1,7 +1,11 @@
 //! A simple C emitter for the Boron compiler.
 
 
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    env,
+    ffi::OsStr,
+};
 
 use chrono::{
     Datelike,
@@ -272,19 +276,38 @@ impl Emitter {
         }
     }
 
-    /// Aliases the standard library if necessary.
+    /// Aliases imports from the standard library if necessary.
     fn match_module(&self, module: String) -> String {
         let top = module.split("/").collect::<Vec<&str>>();
         match top[0] {
             "std" => {
-                let stdpath = vec![".boron", "std"];
-                let path = top[1..].iter();
-                stdpath
-                    .iter()
-                    .chain(path)
-                    .map(|x| x.to_string())
-                    .collect::<Vec<String>>()
-                    .join("/")
+                // Get the current working directory
+                let current_path = match env::current_dir() {
+                    Ok(p) => p.as_path().to_owned(),
+                    Err(_) => throw(Error::CouldNotGetCurrentDir),
+                };
+                for path in current_path.ancestors() {
+                    if path.to_path_buf().join(".boron-std").is_dir() {
+                        // Get the rest of the path (everything after `.boron-std`)
+                        let mut rest_of_path = top[1..].iter().map(|x| OsStr::new(x)).collect::<Vec<&OsStr>>();
+                        rest_of_path.insert(0, &OsStr::new(".boron-std"));
+                        
+                        let output =  path
+                            .iter()
+                            .chain(rest_of_path)
+                            .map(|x| match x.to_str() {
+                                Some(s) => s.to_string(),
+                                None => throw(Error::CouldNotEmit ("use".to_string())),
+                            })
+                            .collect::<Vec<String>>();
+                        if output[0] == "/" {
+                            return format!("/{}", output[1..].join("/"));
+                        } else {
+                            return output.join("/");
+                        }
+                    }
+                }
+                throw(Error::CouldNotReadFile (module));          
             },
             _ => module.to_owned()
         }
