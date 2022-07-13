@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.25.1
+
+Fixed a small bug in header guard generation.
+
 ## Version 0.25.0
 
 Added support for building the standard library using the `--build-std` flag.

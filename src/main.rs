@@ -94,14 +94,14 @@ impl Args {
         }
     }
 
-    /// Gets the bare filename (without extension) from the CLI args.
-    pub fn get_bare_filename(&self) -> String {
+    /// Gets the library name (without extension) from the CLI args.
+    pub fn get_libname(&self) -> String {
         let mut f = match &self.filename {
             Some(f) => f.to_owned(),
             None => throw(Error::NoFileProvided),
         };
         f.truncate(f.len() - 4);
-        f.to_owned()
+        f.to_ascii_uppercase().replace("-", "_").replace("/", "_").to_owned()
     }
 }
 
@@ -124,8 +124,6 @@ fn main() {
         }
     }
     
-    
-
     match args.get_process() {
         Process::Lib => compile_lib(args),
         Process::Exe => compile_exe(args),
@@ -152,7 +150,7 @@ fn compile_lib(args: Args) {
     output_filename.truncate(output_filename.len() - 4);
     output_filename.push_str(".h");
 
-    let output = emitter.compile_lib(args.get_bare_filename(), expressions);
+    let output = emitter.compile_lib(args.get_libname(), expressions);
 
     // Open a file for output
     let mut output_file = match OpenOptions::new()

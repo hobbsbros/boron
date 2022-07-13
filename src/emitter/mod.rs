@@ -740,9 +740,8 @@ impl Emitter {
 
         // Only emit structs and functions
         let (includes, structs, functions, _) = self.emit_block(expressions, None, false);
-        let upper_name = name.to_ascii_uppercase().replace("/", "_");
 
-        let header_guard_start = format!("#ifndef {}\n#define {}", upper_name, upper_name);
+        let header_guard_start = format!("#ifndef {}\n#define {}", &name, &name);
         let header_guard_end = "#endif".to_string();
 
         // Emit header guard
