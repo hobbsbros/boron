@@ -24,7 +24,7 @@ pub struct IdentifierParselet;
 impl PrefixParselet for IdentifierParselet {
     /// Parses an identifier into an expression.
     fn parse(&self, parser: &Parser, tokenizer: &mut Tokenizer, token: Token) -> Expression {
-        if !(token.check(TokenType::Identifier) || token.check(TokenType::Ref)) {
+        if !token.check(TokenType::Identifier) {
             throw(Error::ExpectedIdentifier (token.get_value()));
         }
 
@@ -88,10 +88,7 @@ impl PrefixParselet for IdentifierParselet {
                 variables,
             }
         } else {
-            match token.get_value().as_bytes()[0] as char {
-                '&' => Expression::Reference (token.get_value()),
-                _ => Expression::Identifier (token.get_value()),
-            }
+            Expression::Identifier (token.get_value())
         }
     }
 }

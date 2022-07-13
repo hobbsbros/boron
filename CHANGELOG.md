@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.21.0
+
+Added support for passing structs as function arguments without using `&`.
+
 ## Version 0.20.2
 
 Fixed a bug causing hashing to scramble the order of function parameters.

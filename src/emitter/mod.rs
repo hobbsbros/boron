@@ -71,6 +71,17 @@ impl Environment {
         }
     }
 
+    /// Checks if a variable exists in the given scope.
+    pub fn check(&self, id: usize, varname: &String) -> bool {
+        match self.scopes[id].get(varname) {
+            Some(_) => true,
+            None => match self.scopes[id].get_parent() {
+                Some(p) => self.check(p, varname),
+                None => false,
+            }
+        }
+    }
+
     /// Looks up a structure in the given scope.
     pub fn lookup_struct(&self, id: usize, varname: &String) -> HashMap<String, Variable> {
         match self.scopes[id].get_struct(varname) {
@@ -78,6 +89,17 @@ impl Environment {
             None => match self.scopes[id].get_parent() {
                 Some(p) => self.lookup_struct(p, varname),
                 None => throw(Error::UndeclaredVariable (varname.to_string())),
+            }
+        }
+    }
+
+    /// Checks if a structure exists in the given scope.
+    pub fn check_struct(&self, id: usize, varname: &String) -> bool {
+        match self.scopes[id].get_struct(varname) {
+            Some(_) => true,
+            None => match self.scopes[id].get_parent() {
+                Some(p) => self.check_struct(p, varname),
+                None => false,
             }
         }
     }
@@ -319,16 +341,7 @@ impl Emitter {
             Expression::Float (f) => format!("{}", f),
             Expression::Bool (b) => format!("{}", b),
             Expression::Char (c) => format!("'{}'", c),
-            Expression::Identifier (s) => if in_fn {
-                s.replace(".", "->")
-            } else {
-                format!("{}", s)
-            },
-            Expression::Reference (s) => if in_fn {
-                s.replace(".", "->")
-            } else {
-                format!("{}", s)
-            },
+            Expression::Identifier (s) => format!("{}", self.match_var(s.to_string(), in_fn)),
             Expression::Type (t) => throw(Error::CouldNotEmit (t.to_string())),
             Expression::UnaryOp {
                 op: o,
@@ -421,7 +434,12 @@ impl Emitter {
                         let mut emitted = format!("{}(", n);
                         // Emit each argument recursively
                         for (idx, arg) in a.iter().enumerate() {
-                            emitted.push_str(&format!("{}", self.emit(arg, scope, in_fn)));
+                            let argument = if let Expression::Identifier (s) = arg {
+                                format!("&{}", s)
+                            } else {
+                                format!("{}", self.emit(arg, scope, in_fn))
+                            };
+                            emitted.push_str(&argument);
                             if idx < a.len() - 1 {
                                 emitted.push_str(", ");
                             }
