@@ -26,6 +26,8 @@ pub enum Error {
     ExpectedAssignment (String),
     ExpectedReturnType (String),
     ExpectedSingleQuote (String),
+    ExpectedStruct (String),
+    TooManyLeadingKeywords (String),
     UndeclaredVariable (String),
 }
 
@@ -89,6 +91,12 @@ pub fn throw(e: Error) -> ! {
         },
         Error::ExpectedSingleQuote (s) => {
             println!("{}: Expected single quote ', got token {}", "Error".bold().red(), s);
+        },
+        Error::ExpectedStruct (s) => {
+            println!("{}: Expected struct, got variable {}", "Error".bold().red(), s);
+        },
+        Error::TooManyLeadingKeywords (s) => {
+            println!("{}: Too many leading keywords: {}", "Error".bold().red(), s);
         },
         Error::UndeclaredVariable (s) => {
             println!("{}: Found undeclared variable {}", "Error".bold().red(), s);

@@ -7,6 +7,7 @@ pub mod prefix;
 pub mod identifier_parselet;
 pub mod datatype_parselet;
 pub mod assignment_parselet;
+pub mod reassignment_parselet;
 pub mod literal_parselet;
 pub mod openparen_parselet;
 pub mod binop_parselet;
@@ -16,6 +17,7 @@ pub mod unaryop_parselet;
 pub mod ifelse_parselet;
 pub mod ternary_parselet;
 pub mod struct_parselet;
+pub mod structinit_parselet;
 pub mod fndeclaration_parselet;
 pub mod return_parselet;
 
@@ -28,6 +30,7 @@ use prefix::PrefixParselet;
 use identifier_parselet::IdentifierParselet;
 use datatype_parselet::DatatypeParselet;
 use assignment_parselet::AssignmentParselet;
+use reassignment_parselet::ReassignmentParselet;
 use literal_parselet::LiteralParselet;
 use openparen_parselet::OpenParenParselet;
 use binop_parselet::BinOpParselet;
@@ -37,6 +40,7 @@ use unaryop_parselet::UnaryOpParselet;
 use ifelse_parselet::IfElseParselet;
 use ternary_parselet::TernaryParselet;
 use struct_parselet::StructParselet;
+use structinit_parselet::StructInitParselet;
 use fndeclaration_parselet::FnDeclarationParselet;
 use return_parselet::ReturnParselet;
 
@@ -85,8 +89,6 @@ pub enum Expression {
     },
     // Struct initialization
     StructInit {
-        identifier: String,
-        name: String,
         variables: HashMap<String, Expression>,
     },
     // Variable assignment
@@ -190,7 +192,9 @@ impl Parser {
         prefix_parselets.insert(TokenType::Not, Box::new(UnaryOpParselet {}));
         prefix_parselets.insert(TokenType::Struct, Box::new(StructParselet {}));
         prefix_parselets.insert(TokenType::Return, Box::new(ReturnParselet {}));
-        infix_parselets.insert(TokenType::Assignment, Box::new(AssignmentParselet {}));
+        prefix_parselets.insert(TokenType::Let, Box::new(AssignmentParselet {}));
+        prefix_parselets.insert(TokenType::OpenBrace, Box::new(StructInitParselet {}));
+        infix_parselets.insert(TokenType::Assignment, Box::new(ReassignmentParselet {}));
         infix_parselets.insert(TokenType::OpenParen, Box::new(OpenParenParselet {}));
         infix_parselets.insert(TokenType::Plus, Box::new(BinOpParselet {}));
         infix_parselets.insert(TokenType::Minus, Box::new(BinOpParselet {}));

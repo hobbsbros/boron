@@ -246,14 +246,18 @@ impl Emitter {
     }
 
     /// Emits a datatype name based on the C name.
-    fn match_type(&self, datatype: String) -> String {
+    fn match_type(&self, datatype: String, lhs: bool) -> String {
         let type_str = match datatype.as_str() {
             "int" => "int".to_string(),
             "flt" => "float".to_string(),
             "bln" => "bool".to_string(),
             "chr" => "char".to_string(),
             "nul" => "void".to_string(),
-            _ => format!("struct {} *", datatype.as_str()),
+            _ => if lhs {
+                format!("struct {}", datatype.as_str())
+            } else {
+                format!("struct {} *", datatype.as_str())
+            }
         };
 
         type_str
@@ -355,7 +359,7 @@ impl Emitter {
             Expression::Declaration {
                 datatype: d,
                 identifier: i,
-            } => format!("{} {}", self.match_type(d.to_string()), i),
+            } => format!("{} {}", self.match_type(d.to_string(), false), i),
             Expression::Struct {
                 identifier: i,
                 variables: v,
@@ -366,7 +370,7 @@ impl Emitter {
                 let mut variables = HashMap::new();
                 // Push each variable in the structure
                 for (varname, vartype) in v.iter() {
-                    emitted.push_str(&self.match_type(vartype.to_string()));
+                    emitted.push_str(&self.match_type(vartype.to_string(), false));
                     emitted.push(' ');
                     emitted.push_str(varname);
                     emitted.push_str(";\n");
@@ -378,52 +382,81 @@ impl Emitter {
                 emitted.to_owned()
             },
             Expression::StructInit {
-                identifier: i,
-                name: n,
-                variables: v,
+                variables: _,
             } => {
-                let mut emitted = "struct ".to_string();
-                emitted.push_str(&i);
-                emitted.push(' ');
-                emitted.push_str(&n);
-                emitted.push_str(";\n");
-                // Push each variable in the structure and register each name in the scope
-                for (index, (varname, expr)) in v.iter().enumerate() {
-                    // `scoped_name` is of the form `struct.field`
-                    let scoped_name = format!("{}.{}", &n, &varname);
-                    emitted.push_str(&scoped_name);
-                    emitted.push_str(" = ");
-                    emitted.push_str(&self.emit(&*expr, scope, in_fn));
-                    if index < v.len() - 1 {
-                        emitted.push_str(";\n");
-                    }
-
-                    // Look up this struct in the current scope,
-                    // get the variable type from the struct,
-                    // and register the scoped name (`struct.field`) in the
-                    // current environment
-                    let structure = self.environment.lookup_struct(scope, &i);
-
-                    let variable = match structure.get(varname) {
-                        Some(v) => v,
-                        None => throw(Error::UndeclaredVariable (scoped_name.to_string())),
-                    };
-                    self.environment.register(scope, scoped_name, variable.to_owned());
-                }
-                emitted.to_owned()
+                todo!();
             },
             Expression::Assignment {
                 datatype: d,
                 identifier: i,
                 value: e,
             } => {
-                self.environment.register(scope, i.clone(), Variable::from(&d));
-                format!("{} {} = {}", self.match_type(d.to_string()), self.match_var(i.to_string(), in_fn), self.emit(&*e, scope, in_fn))
+                match &**e {
+                    Expression::StructInit {
+                        variables: v,
+                    } => {
+                        // First, declare the struct
+                        let mut emitted = format!("struct {} {};\n", &d, &i);
+                        self.environment.register(scope, i.clone(), Variable::from(&d));
+                        let structure = self.environment.lookup_struct(scope, &d);
+                        for (index, (varname, variable)) in v.iter().enumerate() {
+                            // `scoped_name` takes the form `struct.field`
+                            let scoped_name = format!("{}.{}", &i, &varname);
+                            let field = format!("{} = {}", &scoped_name, self.emit(variable, scope, in_fn));
+                            let vartype = match structure.get(varname) {
+                                Some(v) => v,
+                                None => throw(Error::UndeclaredVariable (scoped_name.to_owned())),
+                            };
+                            // Register this field as a variable in the current environment
+                            self.environment.register(scope, scoped_name.to_owned(), vartype.to_owned());
+                            emitted.push_str(&field);
+                            if index < v.len() - 1 {
+                                emitted.push_str(";\n");
+                            }
+                        }
+                        emitted.to_owned()
+                    },
+                    _ => {
+                        let vartype = Variable::from(&d);
+                        self.environment.register(scope, i.clone(), vartype.to_owned());
+
+                        // If this is a struct, register each field in the given scope
+                        if let Variable::Struct (s) = vartype {
+                            let structure: HashMap<String, Variable> = self.environment.lookup_struct(scope, &s);
+                            for (varname, variable) in structure.iter() {
+                                // `scoped_name` takes the form `struct.field`
+                                let scoped_name = format!("{}.{}", &i, &varname);
+                                // Register this field as a variable in the current environment
+                                self.environment.register(scope, scoped_name.to_owned(), variable.to_owned());
+                            }
+                        }
+
+                        format!("{} {} = {}", self.match_type(d.to_string(), true), self.match_var(i.to_string(), in_fn), self.emit(&*e, scope, in_fn))
+                    }
+                }
             },
             Expression::Reassignment {
                 identifier: i,
                 value: e,
-            } => format!("{} = {}", self.match_var(i.to_string(), in_fn), self.emit(&*e, scope, in_fn)),
+            } => match &**e {
+                Expression::StructInit {
+                    variables: v,
+                } => {
+                    // No need to declare the struct as this is a *reassignment*
+                    let mut emitted = String::new();
+                    for (index, (varname, variable)) in v.iter().enumerate() {
+                        // `scoped_name` takes the form `struct.field`
+                        let scoped_name = format!("{}.{}", &i, &varname);
+                        let field = format!("{} = {}", &scoped_name, self.emit(variable, scope, in_fn));
+                        emitted.push_str(&field);
+                        if index < v.len() - 1 {
+                            emitted.push_str(";\n");
+                        }
+                    }
+                    emitted.to_owned()
+                },
+                _ => format!("{} = {}", self.match_var(i.to_string(), in_fn), self.emit(&*e, scope, in_fn))
+            },
             Expression::FnCall {
                 name: n,
                 args: a,
@@ -434,13 +467,13 @@ impl Emitter {
                         let names = n.split(".").collect::<Vec<&str>>();
                         let mut emitted = match names.len() {
                             1 => format!("{}(", names[0]),
-                            2 => format!("{}(&{}", names[1], names[0]),
-                            _ => todo!(),
+                            2 => if a.len() != 0 {
+                                format!("{}(&{}, ", names[1], names[0])
+                            } else {
+                                format!("{}(&{}", names[1], names[0])
+                            },
+                            _ => throw(Error::TooManyLeadingKeywords (n.to_string())),
                         };
-
-                        if a.len() != 0 {
-                            emitted.push_str(", ");
-                        }
 
                         // Emit each argument recursively
                         for (idx, arg) in a.iter().enumerate() {
@@ -534,7 +567,7 @@ impl Emitter {
                 body: b,
             } => {
                 // Add the return type to the emitted code
-                let mut emitted = self.match_type(r.to_string());
+                let mut emitted = self.match_type(r.to_string(), true);
                 // Add the function name and an opening parenthesis
                 emitted.push(' ');
                 emitted.push_str(&i);
@@ -542,7 +575,7 @@ impl Emitter {
                 // Add each argument's type and name
                 // Also register each argument as a variable in the current scope
                 for (index, (arg, argtype)) in a.iter().enumerate() {
-                    emitted.push_str(&self.match_type(argtype.to_string()));
+                    emitted.push_str(&self.match_type(argtype.to_string(), false));
                     emitted.push(' ');
                     emitted.push_str(arg);
                     if index < a.len() - 1 {

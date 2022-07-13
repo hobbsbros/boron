@@ -205,6 +205,7 @@ impl Tokenizer {
                     "flt" => Token::new(sofar, TokenType::Type),
                     "bln" => Token::new(sofar, TokenType::Type),
                     "chr" => Token::new(sofar, TokenType::Type),
+                    "let" => Token::new(sofar, TokenType::Let),
                     "struct" => Token::new(sofar, TokenType::Struct),
                     "true" => Token::new(sofar, TokenType::Bool),
                     "false" => Token::new(sofar, TokenType::Bool),

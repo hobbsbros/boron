@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.23.0
+
+Added requirement for `let` keyword in variable initializations.
+
+Fixed a bug preventing functions from returning structs.
+
 ## Version 0.22.0
 
 Added support for struct method calling using `struct.method()` instead of `method(struct)`.
