@@ -384,7 +384,7 @@ impl Emitter {
             Expression::StructInit {
                 variables: _,
             } => {
-                todo!();
+                throw(Error::FoundBareStruct);
             },
             Expression::Assignment {
                 datatype: d,

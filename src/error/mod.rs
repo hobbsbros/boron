@@ -27,6 +27,7 @@ pub enum Error {
     ExpectedReturnType (String),
     ExpectedSingleQuote (String),
     ExpectedStruct (String),
+    FoundBareStruct,
     TooManyLeadingKeywords (String),
     UndeclaredVariable (String),
 }
@@ -91,6 +92,9 @@ pub fn throw(e: Error) -> ! {
         },
         Error::ExpectedSingleQuote (s) => {
             println!("{}: Expected single quote ', got token {}", "Error".bold().red(), s);
+        },
+        Error::FoundBareStruct => {
+            println!("{}: Could not parse bare struct initialization.\nTry naming your struct", "Error".bold().red());
         },
         Error::ExpectedStruct (s) => {
             println!("{}: Expected struct, got variable {}", "Error".bold().red(), s);
