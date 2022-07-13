@@ -11,7 +11,7 @@
 
 
 use std::{
-    fs::{read_to_string, OpenOptions},
+    fs::{rename, read_to_string, OpenOptions},
     env,
     io::Write,
     ffi::OsStr,
@@ -37,6 +37,7 @@ pub enum Process {
     Lib,
     Exe,
     Build,
+    BuildStd,
 }
 
 
@@ -75,6 +76,11 @@ impl Args {
         self.process = Process::Build;
     }
 
+    /// Marsk this as a standard library build.
+    pub fn mark_build_std(&mut self) {
+        self.process = Process::BuildStd;
+    }
+
     /// Gets whether or not this is a library.
     pub fn get_process(&self) -> Process {
         self.process
@@ -110,6 +116,7 @@ fn main() {
                 "--lib" => args.mark_lib(),
                 "--exe" => args.mark_exe(), // NOTE: this is marked by default
                 "--build" => args.mark_build(),
+                "--build-std" => args.mark_build_std(),
                 _ => throw(Error::UnexpectedCliFlag (arg)),
             }
         } else {
@@ -123,6 +130,7 @@ fn main() {
         Process::Lib => compile_lib(args),
         Process::Exe => compile_exe(args),
         Process::Build => build(args),
+        Process::BuildStd => build_std(args),
     };
 }
 
@@ -220,4 +228,31 @@ fn build(args: Args) {
         filename_args.mark_lib();
         compile_lib(filename_args);
     }
+}
+
+
+fn build_std(args: Args) {
+    // Walk the given directory
+    let mut filenames: Vec<String> = Vec::new();
+    for entry in WalkDir::new(&args.get_filename()) {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(_) => throw(Error::CouldNotReadFile (args.get_filename())),
+        };
+        if entry.path().extension() == Some(OsStr::new("brn")) {
+            filenames.push(entry.path().display().to_string());
+        }
+    }
+
+    for filename in filenames {
+        let mut filename_args = Args::new();
+        filename_args.set_filename(filename);
+        filename_args.mark_lib();
+        compile_lib(filename_args);
+    }
+
+    match rename(args.get_filename().as_str(), ".boron-std") {
+        Ok(_) => (),
+        Err(_) => throw(Error::CouldNotWriteFile (args.get_filename())),
+    };
 }

@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.25.0
+
+Added support for building the standard library using the `--build-std` flag.
+
 ## Version 0.24.0
 
 Added support for building and importing the standard library.
