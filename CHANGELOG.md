@@ -2,6 +2,8 @@
 
 ## Version 0.24.0
 
+Added support for building and importing the standard library.
+
 Added support for importing functions from other files.
 
 Changed return keyword from `ret` to `return` to avoid confusion with assignment keyword `let`.

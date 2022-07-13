@@ -679,7 +679,9 @@ impl Emitter {
         self.writeln("");
         
         // Emit header (functions + structs)
+        self.writeln("// Structs begin here");
         self.writeln(&structs);
+        self.writeln("// Functions begin here");
         self.writeln(&functions);
 
         // Emit main function
@@ -715,7 +717,7 @@ impl Emitter {
 
         // Only emit structs and functions
         let (includes, structs, functions, _) = self.emit_block(expressions, None, false);
-        let upper_name = name.to_ascii_uppercase();
+        let upper_name = name.to_ascii_uppercase().replace("/", "_");
 
         let header_guard_start = format!("#ifndef {}\n#define {}", upper_name, upper_name);
         let header_guard_end = "#endif".to_string();
@@ -727,11 +729,15 @@ impl Emitter {
         // Emit #include statements
         self.writeln("#include <stdio.h>");
         self.writeln("#include <stdbool.h>");
+        self.writeln("");
+        self.writeln("// Additional includes begin here");
         self.writeln(&includes);
         self.writeln("");
         
         // Emit header (functions + structs)
+        self.writeln("// Structs begin here");
         self.writeln(&structs);
+        self.writeln("// Functions begin here");
         self.writeln(&functions);
 
         // Emit header guard
