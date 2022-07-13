@@ -60,6 +60,8 @@ pub enum Expression {
     Char (char),
     // Variable or function name
     Identifier (String),
+    // Reference
+    Reference (String),
     // Datatype keyword
     Type (String),
     // Unary operation
@@ -179,6 +181,7 @@ impl Parser {
         // Declarative grammar begins here.
         prefix_parselets.insert(TokenType::Type, Box::new(DatatypeParselet {}));
         prefix_parselets.insert(TokenType::Identifier, Box::new(IdentifierParselet {}));
+        prefix_parselets.insert(TokenType::Ref, Box::new(IdentifierParselet {}));
         prefix_parselets.insert(TokenType::While, Box::new(WhileParselet {}));
         prefix_parselets.insert(TokenType::If, Box::new(IfElseParselet {}));
         prefix_parselets.insert(TokenType::Int, Box::new(LiteralParselet {}));

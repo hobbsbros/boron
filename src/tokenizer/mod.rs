@@ -189,7 +189,9 @@ impl Tokenizer {
                 token
             },
             // Identifier or type keyword
-            'A'..='z' => {
+            'A'..='z' | '&' => {
+                let is_ref: bool = character == '&';
+
                 let mut sofar = String::from(character);
                 while let Some(chr) = charstream.peek() {
                     if !SEPARATORS.contains(chr) {
@@ -212,7 +214,10 @@ impl Tokenizer {
                     "if" => Token::new(sofar, TokenType::If),
                     "else" => Token::new(sofar, TokenType::Else),
                     "ret" => Token::new(sofar, TokenType::Return),
-                    _ => Token::new(sofar, TokenType::Identifier),
+                    _ => match is_ref {
+                        true => Token::new(sofar, TokenType::Ref),
+                        false => Token::new(sofar, TokenType::Identifier)
+                    },
                 };
 
                 token

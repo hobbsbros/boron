@@ -56,7 +56,7 @@ impl Environment {
     }
 
     /// Registers a structure within the given scope.
-    pub fn register_struct(&mut self, id: usize, varname: String, structure: HashMap<String, String>) {
+    pub fn register_struct(&mut self, id: usize, varname: String, structure: HashMap<String, Variable>) {
         self.scopes[id].register_struct(varname, structure);
     }
 
@@ -72,7 +72,7 @@ impl Environment {
     }
 
     /// Looks up a structure in the given scope.
-    pub fn lookup_struct(&self, id: usize, varname: &String) -> HashMap<String, String> {
+    pub fn lookup_struct(&self, id: usize, varname: &String) -> HashMap<String, Variable> {
         match self.scopes[id].get_struct(varname) {
             Some(s) => s.to_owned(),
             None => match self.scopes[id].get_parent() {
@@ -149,7 +149,7 @@ impl Variable {
 #[derive(Clone, Debug)]
 pub struct Scope {
     variables: HashMap<String, Variable>,
-    structs: HashMap<String, HashMap<String, String>>,
+    structs: HashMap<String, HashMap<String, Variable>>,
     id: usize,
     parent: Option<usize>,
 }
@@ -172,7 +172,7 @@ impl Scope {
     }
 
     /// Registers a structure within the scope.
-    pub fn register_struct(&mut self, varname: String, structure: HashMap<String, String>) {
+    pub fn register_struct(&mut self, varname: String, structure: HashMap<String, Variable>) {
         self.structs.insert(varname, structure);
     }
 
@@ -182,7 +182,7 @@ impl Scope {
     }
 
     /// Looks up a structure in the given scope.
-    pub fn get_struct(&self, varname: &String) -> Option<&HashMap<String, String>> {
+    pub fn get_struct(&self, varname: &String) -> Option<&HashMap<String, Variable>> {
         self.structs.get(varname)
     }
 }
@@ -231,20 +231,29 @@ impl Emitter {
             "bln" => "bool".to_string(),
             "chr" => "char".to_string(),
             "nul" => "void".to_string(),
-            _ => format!("struct {}", datatype.as_str()),
+            _ => format!("struct {} *", datatype.as_str()),
         };
 
         type_str
     }
 
+    /// Emits a variable name, dereferencing a struct field if necessary.
+    fn match_var(&self, var: String, in_fn: bool) -> String {
+        if in_fn {
+            var.replace(".", "->")
+        } else {
+            var
+        }
+    }
+
     /// Emits a `printf` expression.
-    fn emit_printf(&self, args: Vec<Expression>, scope: usize) -> String {
+    fn emit_printf(&self, args: Vec<Expression>, scope: usize, in_fn: bool) -> String {
         // "print" is a special case due to idiosyncracies of C & Boron
         let mut emitted = String::new();
         for arg in args {
             if let Expression::Identifier (id) = arg {
-                let var = self.environment.lookup(scope, &id);
-                emitted.push_str(&Variable::print(var, &id));
+                let var: Variable = self.environment.lookup(scope, &id);
+                emitted.push_str(&Variable::print(var, &self.match_var(id.to_string(), in_fn)));
             }
         }
         emitted.pop();
@@ -253,14 +262,14 @@ impl Emitter {
     }
 
     /// Emits a block of code.
-    fn emit_block(&mut self, block: Vec<Expression>, parent: Option<usize>) -> (String, String, String) {
+    fn emit_block(&mut self, block: Vec<Expression>, parent: Option<usize>, in_fn: bool) -> (String, String, String) {
         let scope = self.environment.add(parent);
         let mut code = String::new();
         let mut functions = String::new();
         let mut structs = String::new();
 
         for expression in block {
-            let line = &self.emit(&expression, scope);
+            let line = &self.emit(&expression, scope, in_fn);
             match expression {
                 Expression::Struct {
                     identifier: _,
@@ -303,24 +312,33 @@ impl Emitter {
     }
 
     /// Emits an expression.
-    fn emit(&mut self, expr: &Expression, scope: usize) -> String {
+    fn emit(&mut self, expr: &Expression, scope: usize, in_fn: bool) -> String {
         // Emit the given expression as a string
         let value: String = match expr {
             Expression::Int (i) => format!("{}", i),
             Expression::Float (f) => format!("{}", f),
             Expression::Bool (b) => format!("{}", b),
             Expression::Char (c) => format!("'{}'", c),
-            Expression::Identifier (s) => format!("{}", s),
+            Expression::Identifier (s) => if in_fn {
+                s.replace(".", "->")
+            } else {
+                format!("{}", s)
+            },
+            Expression::Reference (s) => if in_fn {
+                s.replace(".", "->")
+            } else {
+                format!("{}", s)
+            },
             Expression::Type (t) => throw(Error::CouldNotEmit (t.to_string())),
             Expression::UnaryOp {
                 op: o,
                 expr: e,
-            } => format!("{}{}", self.match_op(*o), self.emit(&*e, scope)),
+            } => format!("{}{}", self.match_op(*o), self.emit(&*e, scope, in_fn)),
             Expression::BinOp {
                 left: l,
                 op: o,
                 right: r,
-            } => format!("({} {} {})", self.emit(&*l, scope), self.match_op(*o), self.emit(&*r, scope)),
+            } => format!("({} {} {})", self.emit(&*l, scope, in_fn), self.match_op(*o), self.emit(&*r, scope, in_fn)),
             Expression::Declaration {
                 datatype: d,
                 identifier: i,
@@ -332,15 +350,17 @@ impl Emitter {
                 let mut emitted = "struct ".to_string();
                 emitted.push_str(&i);
                 emitted.push_str(" {\n");
+                let mut variables = HashMap::new();
                 // Push each variable in the structure
                 for (varname, vartype) in v.iter() {
                     emitted.push_str(&self.match_type(vartype.to_string()));
                     emitted.push(' ');
                     emitted.push_str(varname);
                     emitted.push_str(";\n");
+                    variables.insert(varname.to_owned(), Variable::from(vartype));
                 }
                 // Register this structure in the scope
-                self.environment.register_struct(scope, i.to_string(), v.to_owned());
+                self.environment.register_struct(scope, i.to_string(), variables);
                 emitted.push_str("}");
                 emitted.to_owned()
             },
@@ -360,7 +380,7 @@ impl Emitter {
                     let scoped_name = format!("{}.{}", &n, &varname);
                     emitted.push_str(&scoped_name);
                     emitted.push_str(" = ");
-                    emitted.push_str(&self.emit(&*expr, scope));
+                    emitted.push_str(&self.emit(&*expr, scope, in_fn));
                     if index < v.len() - 1 {
                         emitted.push_str(";\n");
                     }
@@ -371,12 +391,11 @@ impl Emitter {
                     // current environment
                     let structure = self.environment.lookup_struct(scope, &i);
 
-                    let varstr = match structure.get(varname) {
+                    let variable = match structure.get(varname) {
                         Some(v) => v,
                         None => throw(Error::UndeclaredVariable (scoped_name.to_string())),
                     };
-                    let variable = Variable::from(&varstr);
-                    self.environment.register(scope, scoped_name, variable);
+                    self.environment.register(scope, scoped_name, variable.to_owned());
                 }
                 emitted.to_owned()
             },
@@ -386,23 +405,23 @@ impl Emitter {
                 value: e,
             } => {
                 self.environment.register(scope, i.clone(), Variable::from(&d));
-                format!("{} {} = {}", self.match_type(d.to_string()), i, self.emit(&*e, scope))
+                format!("{} {} = {}", self.match_type(d.to_string()), self.match_var(i.to_string(), in_fn), self.emit(&*e, scope, in_fn))
             },
             Expression::Reassignment {
                 identifier: i,
                 value: e,
-            } => format!("{} = {}", i, self.emit(&*e, scope)),
+            } => format!("{} = {}", self.match_var(i.to_string(), in_fn), self.emit(&*e, scope, in_fn)),
             Expression::FnCall {
                 name: n,
                 args: a,
             } => {
                 match n.as_str() {
-                    "print" => self.emit_printf(a.clone(), scope),
+                    "print" => self.emit_printf(a.clone(), scope, in_fn),
                     _ => {
                         let mut emitted = format!("{}(", n);
                         // Emit each argument recursively
                         for (idx, arg) in a.iter().enumerate() {
-                            emitted.push_str(&format!("{}", self.emit(arg, scope)));
+                            emitted.push_str(&format!("{}", self.emit(arg, scope, in_fn)));
                             if idx < a.len() - 1 {
                                 emitted.push_str(", ");
                             }
@@ -418,10 +437,10 @@ impl Emitter {
             } => {
                 let mut emitted = "while (".to_string();
                 // Emit the condition
-                emitted.push_str(&self.emit(&*c, scope));
+                emitted.push_str(&self.emit(&*c, scope, in_fn));
                 emitted.push_str(") {\n");
                 // Emit each expression in the while loop
-                let block = self.emit_block(b.to_vec(), Some(scope)).2;
+                let block = self.emit_block(b.to_vec(), Some(scope), in_fn).2;
                 emitted.push_str(&block);
                 emitted.push_str("}");
                 emitted.to_owned()
@@ -432,10 +451,10 @@ impl Emitter {
             } => {
                 let mut emitted = "if (".to_string();
                 // Emit the condition
-                emitted.push_str(&self.emit(&*c, scope));
+                emitted.push_str(&self.emit(&*c, scope, in_fn));
                 emitted.push_str(") {\n");
                 // Emit each expression in the if statement
-                let block = self.emit_block(b.to_vec(), Some(scope)).2;
+                let block = self.emit_block(b.to_vec(), Some(scope), in_fn).2;
                 emitted.push_str(&block);
                 emitted.push_str("}");
                 emitted.to_owned()
@@ -447,14 +466,14 @@ impl Emitter {
             } => {
                 let mut emitted = "if (".to_string();
                 // Emit the condition
-                emitted.push_str(&self.emit(&*c, scope));
+                emitted.push_str(&self.emit(&*c, scope, in_fn));
                 emitted.push_str(") {\n");
                 // Emit each expression in the if statement
-                let block_true = self.emit_block(t.to_vec(), Some(scope)).2;
+                let block_true = self.emit_block(t.to_vec(), Some(scope), in_fn).2;
                 emitted.push_str(&block_true);
                 emitted.push_str("} else {\n");
                 // Emit each expression in the else statement
-                let block_false = self.emit_block(f.to_vec(), Some(scope)).2;
+                let block_false = self.emit_block(f.to_vec(), Some(scope), in_fn).2;
                 emitted.push_str(&block_false);
                 emitted.push_str("}");
                 emitted.to_owned()
@@ -466,15 +485,15 @@ impl Emitter {
             } => {
                 let mut emitted = "(".to_string();
                 // Emit the condition
-                emitted.push_str(&self.emit(&*c, scope));
+                emitted.push_str(&self.emit(&*c, scope, in_fn));
                 // Emit the ternary if
                 emitted.push_str(" ? ");
                 // Emit the first expression
-                emitted.push_str(&self.emit(&*t, scope));
+                emitted.push_str(&self.emit(&*t, scope, in_fn));
                 // Emit the ternary else
                 emitted.push_str(" : ");
                 // Emit the second expression
-                emitted.push_str(&self.emit(&*f, scope));
+                emitted.push_str(&self.emit(&*f, scope, in_fn));
                 // Emit a closing parenthesis
                 emitted.push(')');
                 
@@ -502,18 +521,28 @@ impl Emitter {
                         emitted.push_str(", ");
                     }
 
+                    let var = Variable::from(&argtype);
                     self.environment.register(scope, arg.clone(), Variable::from(&argtype));
+
+                    // If this is a struct, we need to register each field as well
+                    if let Variable::Struct (s) = var {
+                        let fields: HashMap<String, Variable> = self.environment.lookup_struct(scope, &s);
+                        for (varname, variable) in fields.iter() {
+                            let scoped_varname = format!("{}.{}", &arg, &varname);
+                            self.environment.register(scope, scoped_varname.to_owned(), variable.to_owned());
+                        }
+                    }
                 }
                 emitted.push_str(") {\n");
                 // Emit the body
-                let block = self.emit_block(b.to_vec(), Some(scope)).2;
+                let block = self.emit_block(b.to_vec(), Some(scope), true).2;
                 emitted.push_str(&block);
                 emitted.push_str("}");
                 emitted.to_owned()
             },
             Expression::Return (v) => {
                 let mut emitted = "return ".to_string();
-                let expr = self.emit(&*v, scope);
+                let expr = self.emit(&*v, scope, true);
                 emitted.push_str(&expr);
                 emitted.to_owned()
             },
@@ -551,7 +580,7 @@ impl Emitter {
         self.writeln(&datetime);
         self.writeln("");
 
-        let (structs, functions, code) = self.emit_block(expressions, None);
+        let (structs, functions, code) = self.emit_block(expressions, None, false);
 
         // Emit #include statements
         self.writeln("#include <stdio.h>");

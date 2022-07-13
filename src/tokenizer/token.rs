@@ -12,6 +12,7 @@ pub enum TokenType {
     Int,
     Float,
     Bool,
+    Ref,
     Assignment,
     FnDeclaration,
     FnReturnType,

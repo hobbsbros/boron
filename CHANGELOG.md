@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.20.1
+
+Fixed a bug preventing functions from modifying struct arguments.
+
 ## Version 0.20.0
 
 Added support for structs as arguments to functions.
