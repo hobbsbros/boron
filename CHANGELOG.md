@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.23.1
+
+Improved error handling during struct parsing.
+
 ## Version 0.23.0
 
 Added requirement for `let` keyword in variable initializations.

@@ -38,10 +38,7 @@ impl PrefixParselet for StructInitParselet {
                 let varname: String = tokenizer.next().unwrap().get_value();
                 let expr: Expression = match parser.parse(t.get_type().into(), tokenizer) {
                     Some(e) => e,
-                    None => {
-                        dbg!(&t);
-                        throw(Error::CouldNotParse (t.get_value()));
-                    },
+                    None => throw(Error::CouldNotParse (t.get_value())),
                 };
 
                 variables.insert(varname, expr);
