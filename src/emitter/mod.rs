@@ -431,7 +431,17 @@ impl Emitter {
                 match n.as_str() {
                     "print" => self.emit_printf(a.clone(), scope, in_fn),
                     _ => {
-                        let mut emitted = format!("{}(", n);
+                        let names = n.split(".").collect::<Vec<&str>>();
+                        let mut emitted = match names.len() {
+                            1 => format!("{}(", names[0]),
+                            2 => format!("{}(&{}", names[1], names[0]),
+                            _ => todo!(),
+                        };
+
+                        if a.len() != 0 {
+                            emitted.push_str(", ");
+                        }
+
                         // Emit each argument recursively
                         for (idx, arg) in a.iter().enumerate() {
                             let argument = if let Expression::Identifier (s) = arg {

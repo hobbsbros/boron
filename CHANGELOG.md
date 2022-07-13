@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.22.0
+
+Added support for struct method calling using `struct.method()` instead of `method(struct)`.
+
 ## Version 0.21.0
 
 Added support for passing structs as function arguments without using `&`.
