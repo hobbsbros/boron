@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.23.2
+
+Fixed a bug preventing the tokenizer from skipping tabs.
+
 ## Version 0.23.1
 
 Improved error handling during struct parsing.
