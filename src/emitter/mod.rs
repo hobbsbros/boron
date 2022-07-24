@@ -708,9 +708,7 @@ impl Emitter {
         self.writeln(&functions);
 
         // Emit main function
-        self.writeln("int main(void) {");
         self.writeln(&code);
-        self.writeln("return 0;\n}");
 
         self.code.to_owned()
     }

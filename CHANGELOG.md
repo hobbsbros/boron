@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.26.0
+
+Added requirement for `main` function in Boron source files.
+
 ## Version 0.25.1
 
 Fixed a small bug in header guard generation.

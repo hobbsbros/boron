@@ -27,38 +27,42 @@ impl InfixParselet for FnDeclarationParselet {
             _ => throw(Error::ExpectedIdentifier ("before function declaration".to_string())),
         };
 
-        // Parse each argument to the function
         let mut args: Vec<(String, String)> = Vec::new();
-        while let Some(t) = tokenizer.peek() {
-            if t.get_type() == TokenType::FnReturnType
-            || t.get_type() == TokenType::OpenBrace
-            {
-                break;
+
+        // If this function has any arguments, `token.get_type() == TokenType::FnDeclaration`.
+        if token.get_type() != TokenType::FnReturnType {
+            // Parse each argument to the function
+            while let Some(t) = tokenizer.peek() {
+                if t.get_type() == TokenType::FnReturnType
+                || t.get_type() == TokenType::OpenBrace
+                {
+                    break;
+                }
+
+                // Parse each type and variable name
+
+                // Parse the type
+                // It's ok to use `unwrap` here because we know that there's at least one more
+                // token left in the tokenizer
+                let option_argtype = tokenizer.next().unwrap();
+                let argtype = match option_argtype.get_type() {
+                    TokenType::Type
+                    | TokenType::Identifier => option_argtype.get_value(),
+                    _ => throw(Error::ExpectedIdentifier (option_argtype.get_value())),
+                };
+
+                // Parse the variable name
+                let option_arg = match tokenizer.next() {
+                    Some(t) => t,
+                    None => throw(Error::UnexpectedEof (argtype)),
+                };
+                let arg = match option_arg.get_type() {
+                    TokenType::Identifier => option_arg.get_value(),
+                    _ => throw(Error::ExpectedIdentifier (option_arg.get_value())),
+                };
+
+                args.push((arg, argtype));
             }
-
-            // Parse each type and variable name
-
-            // Parse the type
-            // It's ok to use `unwrap` here because we know that there's at least one more
-            // token left in the tokenizer
-            let option_argtype = tokenizer.next().unwrap();
-            let argtype = match option_argtype.get_type() {
-                TokenType::Type
-                | TokenType::Identifier => option_argtype.get_value(),
-                _ => throw(Error::ExpectedIdentifier (option_argtype.get_value())),
-            };
-
-            // Parse the variable name
-            let option_arg = match tokenizer.next() {
-                Some(t) => t,
-                None => throw(Error::UnexpectedEof (argtype)),
-            };
-            let arg = match option_arg.get_type() {
-                TokenType::Identifier => option_arg.get_value(),
-                _ => throw(Error::ExpectedIdentifier (option_arg.get_value())),
-            };
-
-            args.push((arg, argtype));
         }
 
         // Parse the return type
@@ -90,6 +94,12 @@ impl InfixParselet for FnDeclarationParselet {
             TokenType::OpenBrace => {
                 tokenizer.next();
                 "nul".to_string()
+            },
+            TokenType::Type => {
+                tokenizer.next();
+                // Consume the open brace as well
+                tokenizer.next();
+                peek.get_value()
             },
             _ => throw(Error::ExpectedReturnType (peek.get_value())),
         };

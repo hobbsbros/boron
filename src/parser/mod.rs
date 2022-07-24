@@ -151,6 +151,7 @@ impl From<TokenType> for u8 {
         match t {
             TokenType::Assignment => 1,
             TokenType::FnDeclaration => 1,
+            TokenType::FnReturnType => 1,
             TokenType::While => 1,
             TokenType::Plus => 3,
             TokenType::Minus => 3,
@@ -212,6 +213,7 @@ impl Parser {
         infix_parselets.insert(TokenType::Equal, Box::new(BinOpParselet {}));
         infix_parselets.insert(TokenType::TernaryIf, Box::new(TernaryParselet {}));
         infix_parselets.insert(TokenType::FnDeclaration, Box::new(FnDeclarationParselet {}));
+        infix_parselets.insert(TokenType::FnReturnType, Box::new(FnDeclarationParselet {}));
 
         Self {
             prefix_parselets,
